@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+groq
+python-dotenv
+jinja2
+python-multipart
+slowapi
+httpx
+aiofiles
+pytest

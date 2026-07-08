@@ -1,0 +1,77 @@
+
+body {
+    margin: 0;
+    height: 100vh;
+    overflow: hidden;
+    font-family: Arial;
+    background: #0f172a;
+    color: white;
+
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+}
+h1 {
+	flex: 0 0 auto;
+    text-align: center;
+    color: #38bdf8;
+    margin: 10px 0;
+    flex-shrink: 0;
+}
+
+.container {
+    width: 80%;
+    max-width: 900px;
+
+    height: 100vh;
+
+    display: flex;
+    flex-direction: column;
+
+    box-sizing: border-box;
+    padding: 10px;
+}
+
+.chat-box {
+    flex: 1;
+
+    min-height: 0;   /* 🔥 أهم سطر في الموضوع */
+
+    overflow-y: auto;
+
+    background: #1e293b;
+    border-radius: 15px;
+    padding: 20px;
+}
+textarea {
+    flex: 0 0 auto;
+
+    width: 100%;
+    height: 80px;
+
+    margin-top: 10px;
+
+    border-radius: 10px;
+    border: none;
+
+    padding: 15px;
+    font-size: 16px;
+    resize: none;
+    box-sizing: border-box;
+}
+
+button {
+    flex: 0 0 auto;
+
+    margin-top: 10px;
+    width: 100%;
+    padding: 15px;
+
+    border: none;
+    border-radius: 10px;
+
+    background: #38bdf8;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+}
