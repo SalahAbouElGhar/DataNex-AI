@@ -28,7 +28,7 @@ documentation, providing a solid foundation for future growth.
 By combining artificial intelligence with a structured compiler architecture, 
 DataNex AI delivers reliable SQL generation while providing a solid foundation for future growth.
 
-screenshots/UI.png
+![DataNex AI Interface](screenshots/UI.png)
 
 ## Key Features
 
@@ -284,7 +284,7 @@ model.
 Additional query scenarios and compiler behaviors are verified by the
 project's Golden Test regression suite.
 
-screenshots/result.png
+![Generated SQL Example](screenshots/result.png)
 
 ## Project Structure
 
