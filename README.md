@@ -407,37 +407,41 @@ naming conventions, and best practices, see:
 
 DataNex AI is an evolving project. The following roadmap outlines the
 planned direction of development while maintaining the project's focus
-on reliability, modularity, and high-quality SQL generation.
+on reliability, modularity, and high-quality IBM Informix SQL generation.
 
 ### Beta
 
-- [x] Natural language to IBM Informix SQL
-- [x] AST-based SQL compilation
-- [x] Query validation
-- [x] Golden Test regression suite
-- [x] Modular compiler architecture
-- [x] Comprehensive project documentation
+* [x] Natural language to IBM Informix SQL
+* [x] AST-based SQL compilation
+* [x] Query validation
+* [x] Golden Test regression suite
+* [x] Modular compiler architecture
+* [x] Comprehensive project documentation
 
 ### Version 1.0
 
-- [ ] Multi-table query support
-- [ ] Advanced JOIN reasoning
-- [ ] Expanded SQL function support
-- [ ] Improved natural language understanding
-- [ ] Larger Golden Test coverage
+* [ ] Multi-table query support
+* [ ] Advanced JOIN reasoning
+* [ ] Expanded IBM Informix SQL support
+* [ ] Improved schema understanding
+* [ ] Improved natural language understanding
+* [ ] Larger Golden Test coverage
+* [ ] Enhanced compiler diagnostics and error handling
 
 ### Future Releases
 
-- [ ] Database connectivity
-- [ ] Interactive schema discovery
-- [ ] Conversation history
-- [ ] User authentication
-- [ ] Web deployment
-- [ ] SaaS platform
+* [ ] Database connectivity
+* [ ] Interactive schema discovery
+* [ ] Conversation history
+* [ ] User authentication
+* [ ] Web deployment
+* [ ] SaaS platform
+* [ ] Query explanation and AST visualization
 
-The roadmap reflects the current direction of the project and 
-will continue to evolve as new compiler capabilities and 
-architectural improvements are introduced.
+The roadmap reflects the current direction of the project and will
+continue to evolve as new compiler capabilities and architectural
+improvements are introduced.
+
 
 ## Contributing
 
