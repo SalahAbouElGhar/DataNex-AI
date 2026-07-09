@@ -257,9 +257,20 @@ language request into production-ready IBM Informix SQL.
 
 ### Natural Language Request
 
+First, provide the database schema:
+
+```text
+table prod_tbl columns factory_id, prod_id, prod_date, qty
+table prod_desc columns prod_id, prod_name
+```
+
+Then enter the natural language request:
+
 ```text
 total production by factory
 ```
+
+> **Note:** In the current beta release, DataNex AI requires schema information to be provided in the prompt before generating SQL. This allows the compiler pipeline to build a validated AST and produce reliable IBM Informix SQL.
 
 ### Generated SQL
 
