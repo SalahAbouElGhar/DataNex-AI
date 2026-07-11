@@ -496,69 +496,123 @@ def build_join_plan(
     # -------------------------
     # SINGLE TABLE
     # -------------------------
-
+    print("REQUIRED =", required_tables)
+    print("RELATIONSHIPS =", relationships)
+    
     if len(required_tables) <= 1:
 
-        return None
+        return {
+            "base_table": required_tables[0],
+            "joins": []
+        }
+    
+#    if len(required_tables) <= 1:
+#        
+#        return {
+#                    "base_table": None,
+#                    "joins": []
+#                }
+
+#        return None
 
     # -------------------------
     # BASE TABLE
     # -------------------------
-
+    
     base_table = None
 
     for relationship in relationships:
     
-        left_table = relationship[
-            "left_table"
-        ]
+        if relationship["left_table"] in required_tables:
     
-        if left_table in required_tables:
-    
-            base_table = left_table
-    
+            base_table = relationship["left_table"]
             break
-    
+
+#    base_table = None
+#
+#    for relationship in relationships:
+#    
+#        left_table = relationship[
+#            "left_table"
+#        ]
+#    
+#        if left_table in required_tables:
+#    
+#            base_table = left_table
+#    
+#            break
     joins = []
-    # -------------------------
-    # FIND RELATIONSHIPS
-    # -------------------------
 
     for relationship in relationships:
-
-        left_table = relationship[
-            "left_table"
-        ]
-
-        right_table = relationship[
-            "right_table"
-        ]
-
-        # -------------------------
-        # MATCH REQUIRED TABLES
-        # -------------------------
-
+    
+        left_table = relationship["left_table"]
+        right_table = relationship["right_table"]
+    
         if (
             left_table not in required_tables
-            or right_table not in required_tables
+            or
+            right_table not in required_tables
         ):
             continue
-
+    
         joins.append({
-
-             "left_table": left_table,
-
+    
+            "join_type": "INNER",
+    
+            "left_table": left_table,
             "right_table": right_table,
-
-            "left_column": relationship[
-                "left_column"
-            ],
-
-            "right_column": relationship[
-                "right_column"
-            ]
-
+    
+            "left_column":
+                relationship["left_column"],
+    
+            "right_column":
+                relationship["right_column"]
+    
         })
+    
+#    joins = []
+#    # -------------------------
+#    # FIND RELATIONSHIPS
+#    # -------------------------
+#
+#    for relationship in relationships:
+#
+#        left_table = relationship[
+#            "left_table"
+#        ]
+#
+#        right_table = relationship[
+#            "right_table"
+#        ]
+#
+#        # -------------------------
+#        # MATCH REQUIRED TABLES
+#        # -------------------------
+#
+#        if (
+#            left_table not in required_tables
+#            or right_table not in required_tables
+#        ):
+#            continue
+#
+#        joins.append({
+#        
+#            "join_type": "INNER",
+#
+#            "left_table": left_table,
+#
+#            "right_table": right_table,
+#
+#            "left_column": relationship[
+#                "left_column"
+#            ],
+#
+#            "right_column": relationship[
+#                "right_column"
+#            ]
+#
+#        })
+#        
 
     # -------------------------
     # FINAL PLAN
@@ -892,7 +946,9 @@ def prepare_query_context(prompt,schema):
                 required_tables,
                 relationships
             )
-        
+            
+            print("JOIN_PLAN =", join_plan)
+            
         columns = get_columns_for_tables(
                     schema,
                     required_tables
@@ -1017,6 +1073,66 @@ def resolve_dimensions(
     )
 
 #--------------------------------------------------------------------------
+def discover_relationships(
+    schema,
+    relationship_hints=None
+):
+    if relationship_hints is None:
+        relationship_hints = {}
+        
+    relationships = []
+    
+    tables = list(
+        schema.keys()
+    )
+    
+    print("SCHEMA = ",schema)
+    print("TABLES = ", tables)
+    for i in range(len(tables)):
+
+        left_table = tables[i]
+    
+        for j in range(i + 1, len(tables)):
+    
+            right_table = tables[j]
+    
+            print(left_table, "----", right_table)
+    
+            left_columns = set(
+                schema[left_table]
+            )
+    
+            right_columns = set(
+                schema[right_table]
+            )
+    
+            common_columns = (
+                left_columns &
+                right_columns
+            )
+    
+            for column in common_columns:
+    
+                if not column.endswith("_id"):
+                    continue
+    
+                relationships.append({
+    
+                    "left_table": left_table,
+                    "right_table": right_table,
+    
+                    "left_column": column,
+                    "right_column": column
+                })
+                print(
+                "COMMON:",
+                left_table,
+                right_table,
+                common_columns
+)
+        
+    return relationships
+#--------------------------------------------------------------------------
 def build_query_plan(prompt: str, schema: dict):
     # PIPELINE:
     # tables
@@ -1034,6 +1150,12 @@ def build_query_plan(prompt: str, schema: dict):
     except Exception as e:
         traceback.print_exc()
     
+    #----------------------------------------
+
+    print("DISCOVER_RELATIONSHIPS = ",
+        discover_relationships(schema)
+    )
+    #-----------------------------------------
     required_tables = context["required_tables"]
     relationships = context["relationships"]
     join_plan = context["join_plan"]

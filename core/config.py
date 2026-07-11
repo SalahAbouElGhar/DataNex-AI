@@ -86,4 +86,12 @@ AGGREGATION_KEYWORDS = {
     "COUNT": ["count" ,"number of" , "how many" ]
 }
 #------------------------------------------------------
+RELATIONSHIP_HINTS = {}
+#RELATIONSHIP_HINTS = {
+#    "sales_tbl.cust_id":
+#        "customer_tbl.cust_id",
+#
+#    "prod_tbl.prod_id":
+#        "prod_desc.prod_id"
+#}
 #------------------------------------------------------

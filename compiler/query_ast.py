@@ -230,6 +230,10 @@ def build_ast(query_plan):
     ast["limit"] = build_limit_ast(query_plan)
     
     join_plan = query_plan.get("join_plan")
+    
+#    ast["from"] = join_plan["base_table"]
+#
+#    ast["joins"] = join_plan["joins"]
 
     if join_plan:
     

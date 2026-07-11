@@ -76,33 +76,48 @@ def compile_from_ast(
 
     base_alias = alias_map[base_table]
 
-    sql = (
+    return (
         f"FROM "
         f"{base_table} "
         f"{base_alias}"
     )
-
-    for join in ast["joins"]:
-
-        right_table = join["right_table"]
-
-        left_table = join["left_table"]
-
-        left_column = join["left_column"]
-
-        right_column = join["right_column"]
-
-        left_alias = alias_map[left_table]
-
-        right_alias = alias_map[right_table]
-
-        sql += f"""
-JOIN {right_table} {right_alias}
-ON {left_alias}.{left_column}
-= {right_alias}.{right_column}
-"""
-
-    return sql.strip()
+    
+#def compile_from_ast(
+#    ast,
+#    alias_map
+#):
+#
+#    base_table = ast["from"]
+#
+#    base_alias = alias_map[base_table]
+#
+#    sql = (
+#        f"FROM "
+#        f"{base_table} "
+#        f"{base_alias}"
+#    )
+#
+#    for join in ast["joins"]:
+#
+#        right_table = join["right_table"]
+#
+#        left_table = join["left_table"]
+#
+#        left_column = join["left_column"]
+#
+#        right_column = join["right_column"]
+#
+#        left_alias = alias_map[left_table]
+#
+#        right_alias = alias_map[right_table]
+#
+#        sql += f"""
+#JOIN {right_table} {right_alias}
+#ON {left_alias}.{left_column}
+#= {right_alias}.{right_column}
+#"""
+#
+#    return sql.strip()
 #--------------------------------------------------
 def compile_where_ast(
     ast,
@@ -310,6 +325,40 @@ def compile_limit_ast(ast):
             f"FIRST {limit_node['count']}"
         )
 #--------------------------------------------------
+def compile_join_ast(
+    joins,
+    schema,
+    alias_map
+):
+
+    if not joins:
+        return ""
+
+    sql_parts = []
+
+    for join in joins:
+
+        left_table = join["left_table"]
+        right_table = join["right_table"]
+
+        left_column = join["left_column"]
+        right_column = join["right_column"]
+
+        left_alias = alias_map[left_table]
+        right_alias = alias_map[right_table]
+
+        join_sql = (
+            f"INNER JOIN {right_table} {right_alias}\n"
+            f"    ON {left_alias}.{left_column} = "
+            f"{right_alias}.{right_column}"
+        )
+
+        sql_parts.append(
+            join_sql
+        )
+
+    return "\n".join(sql_parts)
+#--------------------------------------------------
 def compile_sql_ast(ast,schema,alias_map):
     
     select_sql = compile_select_ast(
@@ -320,6 +369,12 @@ def compile_sql_ast(ast,schema,alias_map):
     
     from_sql = compile_from_ast(
         ast,
+        alias_map
+    )
+    
+    join_clause = compile_join_ast(
+        ast["joins"],
+        schema,
         alias_map
     )
     
@@ -363,6 +418,11 @@ def compile_sql_ast(ast,schema,alias_map):
         select_sql,
         from_sql
     ]
+    
+    if join_clause:
+        sql_parts.append(
+            join_clause
+        )
 
     if where_sql:
 
