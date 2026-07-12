@@ -4,12 +4,17 @@ from core.config import (
     BUSINESS_TERMS,
     MEASURE_KEYWORDS,
     DATE_COLUMN_KEYWORDS,
-    LIMIT_PATTERNS 
+    LIMIT_PATTERNS,
+    RELATIONSHIP_SUFFIXES,
+    RELATIONSHIP_HINTS
 )
 from schema.schema_utils import (
     extract_all_columns,
     extract_id_columns,
-    get_columns_for_tables
+    get_columns_for_tables,
+    is_relationship_column,
+    strip_relationship_suffix,
+    extract_relationship_columns
 )
 import traceback
 # --------------------------------------------------   
@@ -63,9 +68,11 @@ def is_candidate_key(col):
     col = col.lower()
 
     return (
-        col.endswith("_id") or
         col == "id"
+        or
+        is_relationship_column(col)
     )
+
 #--------------------------------------------------
 def calculate_relationship_score(
     left_column,
@@ -80,15 +87,21 @@ def calculate_relationship_score(
     # RULE 1
     if l == r:
         score += 50
+        
+    left_is_rel = is_relationship_column(l)
+    right_is_rel = is_relationship_column(r)
 
     # RULE 2
-    if l.endswith("_id") and r.endswith("_id"):
+    if left_is_rel and right_is_rel:
+        
         score += 30
-
+    
     # RULE 3
-    if l.replace("_id", "") == r.replace("_id", ""):
+    if (left_is_rel and right_is_rel
+        and strip_relationship_suffix(l) == strip_relationship_suffix(r)):
+            
         score += 40
-
+ 
     return score
 #--------------------------------------------------
 def detect_relationships(schema):
@@ -496,8 +509,8 @@ def build_join_plan(
     # -------------------------
     # SINGLE TABLE
     # -------------------------
-    print("REQUIRED =", required_tables)
-    print("RELATIONSHIPS =", relationships)
+#    print("REQUIRED =", required_tables)
+#    print("RELATIONSHIPS =", relationships)
     
     if len(required_tables) <= 1:
 
@@ -506,15 +519,6 @@ def build_join_plan(
             "joins": []
         }
     
-#    if len(required_tables) <= 1:
-#        
-#        return {
-#                    "base_table": None,
-#                    "joins": []
-#                }
-
-#        return None
-
     # -------------------------
     # BASE TABLE
     # -------------------------
@@ -528,19 +532,6 @@ def build_join_plan(
             base_table = relationship["left_table"]
             break
 
-#    base_table = None
-#
-#    for relationship in relationships:
-#    
-#        left_table = relationship[
-#            "left_table"
-#        ]
-#    
-#        if left_table in required_tables:
-#    
-#            base_table = left_table
-#    
-#            break
     joins = []
 
     for relationship in relationships:
@@ -570,50 +561,6 @@ def build_join_plan(
     
         })
     
-#    joins = []
-#    # -------------------------
-#    # FIND RELATIONSHIPS
-#    # -------------------------
-#
-#    for relationship in relationships:
-#
-#        left_table = relationship[
-#            "left_table"
-#        ]
-#
-#        right_table = relationship[
-#            "right_table"
-#        ]
-#
-#        # -------------------------
-#        # MATCH REQUIRED TABLES
-#        # -------------------------
-#
-#        if (
-#            left_table not in required_tables
-#            or right_table not in required_tables
-#        ):
-#            continue
-#
-#        joins.append({
-#        
-#            "join_type": "INNER",
-#
-#            "left_table": left_table,
-#
-#            "right_table": right_table,
-#
-#            "left_column": relationship[
-#                "left_column"
-#            ],
-#
-#            "right_column": relationship[
-#                "right_column"
-#            ]
-#
-#        })
-#        
-
     # -------------------------
     # FINAL PLAN
     # -------------------------
@@ -863,7 +810,10 @@ def build_semantic_targets(schema, BUSINESS_TERMS):
     count_targets = {}
 
     for col in id_columns:
-        root = col.replace("_id", "")
+        
+        root = strip_relationship_suffix(col)
+        
+#        root = col.replace("_id", "")
         count_targets[root] = col
 
     # -----------------------------
@@ -947,7 +897,7 @@ def prepare_query_context(prompt,schema):
                 relationships
             )
             
-            print("JOIN_PLAN =", join_plan)
+#            print("JOIN_PLAN =", join_plan)
             
         columns = get_columns_for_tables(
                     schema,
@@ -1086,8 +1036,8 @@ def discover_relationships(
         schema.keys()
     )
     
-    print("SCHEMA = ",schema)
-    print("TABLES = ", tables)
+#    print("SCHEMA = ",schema)
+#    print("TABLES = ", tables)
     for i in range(len(tables)):
 
         left_table = tables[i]
@@ -1096,7 +1046,7 @@ def discover_relationships(
     
             right_table = tables[j]
     
-            print(left_table, "----", right_table)
+#            print(left_table, "----", right_table)
     
             left_columns = set(
                 schema[left_table]
@@ -1113,9 +1063,12 @@ def discover_relationships(
     
             for column in common_columns:
     
-                if not column.endswith("_id"):
-                    continue
+#                if not column.endswith("_id"):
+#                    continue
     
+                if not is_relationship_column(column):
+                    continue
+                    
                 relationships.append({
     
                     "left_table": left_table,
@@ -1124,12 +1077,7 @@ def discover_relationships(
                     "left_column": column,
                     "right_column": column
                 })
-                print(
-                "COMMON:",
-                left_table,
-                right_table,
-                common_columns
-)
+#                print("COMMON:",left_table,right_table,common_columns)
         
     return relationships
 #--------------------------------------------------------------------------
@@ -1151,10 +1099,27 @@ def build_query_plan(prompt: str, schema: dict):
         traceback.print_exc()
     
     #----------------------------------------
-
-    print("DISCOVER_RELATIONSHIPS = ",
-        discover_relationships(schema)
-    )
+#    SCHEMA = {
+#
+#    "sales_tbl": [
+#        "sale_no",
+#        "cust_no",
+#        "prod_id",
+#        "qty"
+#    ],
+#
+#    "customer_tbl": [
+#        "cust_no",
+#        "cust_name"
+#    ],
+#
+#    "product_tbl": [
+#        "prod_id",
+#        "prod_name"
+#    ]
+#}
+#
+#    print("DISCOVER_RELATIONSHIPS = ",discover_relationships(SCHEMA))
     #-----------------------------------------
     required_tables = context["required_tables"]
     relationships = context["relationships"]

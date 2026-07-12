@@ -1,4 +1,13 @@
 # schema_utils.py
+from core.config import (
+    BUSINESS_KEYWORDS,
+    BUSINESS_TERMS,
+    MEASURE_KEYWORDS,
+    DATE_COLUMN_KEYWORDS,
+    LIMIT_PATTERNS,
+    RELATIONSHIP_SUFFIXES,
+    RELATIONSHIP_HINTS
+)
 #-------------------------------------------------------
 def extract_all_columns(schema):
 
@@ -9,15 +18,15 @@ def extract_all_columns(schema):
 
     return list(set(all_columns))
 #-------------------------------------------------------
-def extract_id_columns(all_columns):
-    
-    id_columns = []
-
-    for col in all_columns:
-        if col.endswith("_id"):
-            id_columns.append(col)
-
-    return id_columns
+#def extract_id_columns(all_columns):
+#    
+#    id_columns = []
+#
+#    for col in all_columns:
+#        if col.endswith("_id"):
+#            id_columns.append(col)
+#
+#    return id_columns
 #-------------------------------------------------------
 def get_column_owner(column,schema):
 
@@ -101,3 +110,60 @@ def build_aggregation_alias(
             prefix = function_name.lower()
 
     return f"{prefix}_{measure}"
+#-----------------------------------------------------------
+# Relationship Intelligence Helpers
+#-----------------------------------------------------------
+def is_relationship_column(column):
+
+    column = column.lower()
+
+    return any(
+        column.endswith(suffix)
+        for suffix in RELATIONSHIP_SUFFIXES
+    )
+#-----------------------------------------------------------
+def strip_relationship_suffix(
+    column
+):
+
+    column = column.lower()
+
+    for suffix in RELATIONSHIP_SUFFIXES:
+
+        if column.endswith(suffix):
+
+            return column[:-len(suffix)]
+
+    return column
+#-----------------------------------------------------------
+#def extract_relationship_columns(
+#    all_columns
+#):
+#
+#    return [
+#        col
+#        for col in all_columns
+#        if is_relationship_column(col)
+#    ]
+#-----------------------------------------------------------
+def extract_relationship_columns(
+    all_columns
+):
+
+    relationship_columns = []
+
+    for col in all_columns:
+
+        if is_relationship_column(col):
+            relationship_columns.append(col)
+
+    return relationship_columns
+#--------------------------------------------------
+def extract_id_columns(
+    all_columns
+):
+
+    return extract_relationship_columns(
+        all_columns
+    )
+#--------------------------------------------------
