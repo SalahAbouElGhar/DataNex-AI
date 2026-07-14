@@ -1,3 +1,10 @@
+from tests.data.test_fixtures import (
+    TEST_SALES_SCHEMA,
+    TEST_PRODUCTION_SCHEMA,
+    TEST_SALES_ALIAS_MAP,
+    TEST_PRODUCTION_ALIAS_MAP
+)
+#---------------------------------------------------
 """
 AST Compiler Golden Test Suite
 
@@ -29,9 +36,8 @@ AST_COMPILER_TEST_CASES = [
         "tags": [
 
             "raw",
-        
             "relative_period",
-        
+            "Production",
             "today"
         
         ],
@@ -76,19 +82,9 @@ AST_COMPILER_TEST_CASES = [
     
                 "limit": None
             },
-            "schema": {
-                "tables": {
-                    "prod_tbl": [
-                        "factory_id",
-                        "prod_id",
-                        "prod_date",
-                        "qty"
-                    ]
-                }
-            },
-            "alias_map": {
-                "prod_tbl": "pt"
-            }
+            "schema": TEST_PRODUCTION_SCHEMA,
+
+            "alias_map": TEST_PRODUCTION_ALIAS_MAP
         },
 
         "expected": {
@@ -120,9 +116,8 @@ ORDER BY
         "tags": [
 
             "raw",
-        
             "relative_period",
-        
+            "Production",
             "yesterday"
         
         ],
@@ -147,19 +142,9 @@ ORDER BY
                     "order_by": [{"column": "factory_id", "direction": "ASC"},
                                 {"column": "prod_id", "direction": "ASC"}],
                     "limit": None},
-            "schema": {
-                "tables": {
-                    "prod_tbl": [
-                        "factory_id",
-                        "prod_id",
-                        "prod_date",
-                        "qty"
-                    ]
-                }
-            },
-            "alias_map": {
-                "prod_tbl": "pt"
-            }
+            "schema": TEST_PRODUCTION_SCHEMA,
+
+            "alias_map": TEST_PRODUCTION_ALIAS_MAP
         },
 
         "expected": {
@@ -194,6 +179,8 @@ ORDER BY
         "tags": [
                 "report",
                 "sum",
+                "aggregation",
+                "Production",
                 "group_by"
             ],
         
@@ -234,19 +221,9 @@ ORDER BY
                 
                     "limit": None
                 },
-            "schema": {
-                "tables": {
-                    "prod_tbl": [
-                        "factory_id",
-                        "prod_id",
-                        "prod_date",
-                        "qty"
-                    ]
-                }
-            },
-            "alias_map": {
-                "prod_tbl": "pt"
-            }
+            "schema": TEST_PRODUCTION_SCHEMA,
+
+            "alias_map": TEST_PRODUCTION_ALIAS_MAP
         },
 
         "expected": {
@@ -280,7 +257,8 @@ ORDER BY
                 "report",
                 "sum",
                 "group_by",
-                "having"
+                "having",
+                "Production"
             ],
         
         "input": {
@@ -319,19 +297,9 @@ ORDER BY
                         ],
             "limit": None
             },
-            "schema": {
-                    "tables": {
-                    "prod_tbl": [
-                        "factory_id",
-                        "prod_id",
-                        "prod_date",
-                        "qty"
-                    ]
-                }
-            },
-            "alias_map": {
-                "prod_tbl": "pt"
-            }
+            "schema": TEST_PRODUCTION_SCHEMA,
+
+            "alias_map": TEST_PRODUCTION_ALIAS_MAP
         },
 
         "expected": {
@@ -363,7 +331,8 @@ ORDER BY
         "tags": [
                 "report",
                 "count_distinct",
-                "group_by"
+                "group_by",
+                "Production"
                 
             ],
         
@@ -396,19 +365,9 @@ ORDER BY
                             ],
                 "limit": None
                 },
-            "schema": {
-                    "tables": {
-                    "prod_tbl": [
-                        "factory_id",
-                        "prod_id",
-                        "prod_date",
-                        "qty"
-                    ]
-                    }
-                },
-            "alias_map": {
-                "prod_tbl": "pt"
-            }
+            "schema": TEST_PRODUCTION_SCHEMA,
+
+            "alias_map": TEST_PRODUCTION_ALIAS_MAP
         },
 
         "expected": {
@@ -438,7 +397,8 @@ ORDER BY
         "tags": [
                 "report",
                 "avg",
-                "group_by"
+                "group_by",
+                "Production"
                 
             ],
         
@@ -470,19 +430,9 @@ ORDER BY
                             ],
                 "limit": None
                 },
-            "schema": {
-                    "tables": {
-                    "prod_tbl": [
-                        "factory_id",
-                        "prod_id",
-                        "prod_date",
-                        "qty"
-                    ]
-                    }
-                },
-            "alias_map": {
-                "prod_tbl": "pt"
-            }
+            "schema": TEST_PRODUCTION_SCHEMA,
+
+            "alias_map": TEST_PRODUCTION_ALIAS_MAP
         },
 
         "expected": {
@@ -512,7 +462,8 @@ ORDER BY
         "tags": [
                 "report",
                 "max",
-                "group_by"
+                "group_by",
+                "Production"
                 
             ],
         
@@ -543,19 +494,9 @@ ORDER BY
                             }
                             ],
                 "limit": None},
-            "schema": {
-                    "tables": {
-                    "prod_tbl": [
-                        "factory_id",
-                        "prod_id",
-                        "prod_date",
-                        "qty"
-                    ]
-                    }
-                },
-            "alias_map": {
-                "prod_tbl": "pt"
-            }
+            "schema": TEST_PRODUCTION_SCHEMA,
+
+            "alias_map": TEST_PRODUCTION_ALIAS_MAP
         },
 
         "expected": {
@@ -585,7 +526,8 @@ ORDER BY
         "tags": [
                 "report",
                 "min",
-                "group_by"
+                "group_by",
+                "Production"
                 
             ],
         
@@ -618,19 +560,9 @@ ORDER BY
                     }
                     ],
                 "limit": None},
-            "schema": {
-                    "tables": {
-                    "prod_tbl": [
-                        "factory_id",
-                        "prod_id",
-                        "prod_date",
-                        "qty"
-                    ]
-                    }
-                },
-            "alias_map": {
-                "prod_tbl": "pt"
-            }
+            "schema": TEST_PRODUCTION_SCHEMA,
+
+            "alias_map": TEST_PRODUCTION_ALIAS_MAP
         },
 
         "expected": {
@@ -660,7 +592,8 @@ ORDER BY
         "tags": [
                 "report",
                 "count",
-                "count_rows"
+                "count_rows",
+                "Production"
                 
             ],
         
@@ -682,19 +615,9 @@ ORDER BY
                 "having": [],
                 "order_by": [],
                 "limit": None},
-            "schema": {
-                    "tables": {
-                    "prod_tbl": [
-                        "factory_id",
-                        "prod_id",
-                        "prod_date",
-                        "qty"
-                    ]
-                    }
-                },
-            "alias_map": {
-                "prod_tbl": "pt"
-            }
+            "schema": TEST_PRODUCTION_SCHEMA,
+
+            "alias_map": TEST_PRODUCTION_ALIAS_MAP
         },
 
         "expected": {
@@ -718,7 +641,8 @@ FROM prod_tbl pt
                 "report",
                 "top_n",
                 "first",
-                "limit"
+                "limit",
+                "Production"
                                
             ],
         
@@ -760,19 +684,9 @@ FROM prod_tbl pt
                     "count": 10
                     }
                 },
-            "schema": {
-                    "tables": {
-                    "prod_tbl": [
-                        "factory_id",
-                        "prod_id",
-                        "prod_date",
-                        "qty"
-                    ]
-                    }
-                },
-            "alias_map": {
-                "prod_tbl": "pt"
-            }
+            "schema": TEST_PRODUCTION_SCHEMA,
+
+            "alias_map": TEST_PRODUCTION_ALIAS_MAP
         },
 
         "expected": {
@@ -802,7 +716,8 @@ ORDER BY
         "tags": [
                 "report",
                 "relative_period",
-                "month"
+                "month",
+                "Production"
                 
             ],
         
@@ -853,19 +768,9 @@ ORDER BY
                     ],
                 "limit": None
                 },
-            "schema": {
-                    "tables": {
-                    "prod_tbl": [
-                        "factory_id",
-                        "prod_id",
-                        "prod_date",
-                        "qty"
-                    ]
-                    }
-                },
-            "alias_map": {
-                "prod_tbl": "pt"
-            }
+            "schema": TEST_PRODUCTION_SCHEMA,
+
+            "alias_map": TEST_PRODUCTION_ALIAS_MAP
         },
 
         "expected": {
@@ -899,7 +804,8 @@ ORDER BY
         "tags": [
                 "report",
                 "relative_period",
-                "year"
+                "year",
+                "Production"
                 
             ],
         
@@ -950,19 +856,9 @@ ORDER BY
                     ],
                 "limit": None
                 },
-            "schema": {
-                    "tables": {
-                    "prod_tbl": [
-                        "factory_id",
-                        "prod_id",
-                        "prod_date",
-                        "qty"
-                    ]
-                    }
-                },
-            "alias_map": {
-                "prod_tbl": "pt"
-            }
+            "schema": TEST_PRODUCTION_SCHEMA,
+
+            "alias_map": TEST_PRODUCTION_ALIAS_MAP
         },
 
         "expected": {
@@ -985,7 +881,87 @@ ORDER BY
 """.strip()
         }
     
+    },
+# -----------------------------------------------------------------------------------
+#"tags": [
+#    TEST_TAGS["REPORT"],
+#    TEST_TAGS["JOIN"],
+#    TEST_TAGS["PRODUCTION"],
+#    TEST_TAGS["DISPLAY_COLUMN"]
+#]
+
+ {
+
+        "id": "AST-013",
+
+        "name": "Report - Production summary by product name",
+        
+        "description": "Verify SQL generation for production aggregated by product display name using INNER JOIN.",
+
+        "tags": [
+                    "report",
+                    "aggregation",
+                    "join",
+                    "group-by",
+                    "display-column",
+                    "production"
+                ],
+        
+        "input": {
+
+            "ast":
+                {
+                'select': [
+                            {'type': 'column', 'column': 'prod_name'},
+                            {
+                            'type': 'aggregation',
+                            'function': 'SUM',
+                            'column': 'qty',
+                            'alias': 'total_qty'
+                            }
+                        ],
+                'from': 'prod_tbl',
+                'joins': [
+                            {'join_type': 'INNER',
+                            'left_table': 'prod_tbl',
+                            'right_table': 'prod_desc',
+                            'left_column': 'prod_id',
+                            'right_column': 'prod_id'}
+                        ],
+                'where': [],
+                'group_by': ['prod_name'],
+                'having': [],
+                'order_by': [
+                            {'column': 'total_qty', 'direction': 'DESC'}
+                            ],
+                'limit': None
+                 },
+            "schema": TEST_PRODUCTION_SCHEMA,
+
+            "alias_map": TEST_PRODUCTION_ALIAS_MAP
+            },
+
+        "expected": {
+            "sql": """
+SELECT
+  pd.prod_name,
+  SUM(pt.qty) AS total_qty
+
+FROM prod_tbl pt
+
+INNER JOIN prod_desc pd
+    ON pt.prod_id = pd.prod_id
+
+GROUP BY 
+  pd.prod_name
+
+ORDER BY
+  total_qty DESC
+""".strip()
+        }
     }
+    
+    
 # -----------------------------------------------------------------------------------
 ]
 

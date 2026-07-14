@@ -11,6 +11,7 @@ from compiler.sql_reasoning import (
 
 from ai.prompts import (
     system_prompt,
+    detect_domain
     )
 from validators.validators import (
     validate_prompt,
@@ -23,9 +24,15 @@ from compiler.ast_compiler import (
     compile_sql_ast
     )
 import traceback
-#------------------------------------------------------------
+
+from core.config import (
+    DEMO_SCHEMAS,
+    DEFAULT_DEMO_SCHEMA,
+    ENABLE_DEMO_SCHEMA_FALLBACK
+)
+#-------------------------------------------------------
 sessions = {}
-#--------------------------------------------------------------
+#-------------------------------------------------------
 def get_session(session_id):
 
     if session_id not in sessions:
@@ -36,7 +43,44 @@ def get_session(session_id):
         }
 
     return sessions[session_id]
-#---------------------------------------------------------
+#-------------------------------------------------------
+def select_demo_schema(prompt):
+
+    domain = detect_domain(prompt)
+    
+    print("DOMAIN =", domain)
+
+    if domain == "production":
+        return "production_demo"
+
+    if domain == "sales":
+        return "sales_demo"
+
+    return DEFAULT_DEMO_SCHEMA
+#-------------------------------------------------------
+def get_active_schema(session,prompt):
+    
+    if session.get("user_schema"):
+        return session["user_schema"]
+
+    if ENABLE_DEMO_SCHEMA_FALLBACK:
+
+        demo_name = select_demo_schema(prompt)
+
+        return DEMO_SCHEMAS[demo_name]["schema"]
+
+    return None
+
+#    if session.get("user_schema"):
+#        return session["user_schema"]
+#
+#    if ENABLE_DEMO_SCHEMA_FALLBACK:
+#
+#        return DEMO_SCHEMAS[DEFAULT_DEMO_SCHEMA]["schema"]
+#
+#    return None
+
+#-----------------------------------------------------------
 def add_user_message(session, prompt):
 
     session["history"].append({
@@ -79,10 +123,15 @@ def save_user_schema(session, prompt):
 #---------------------------------------------------------
 def create_query_plan(session, prompt):
 
-    raw_schema = session["user_schema"]
+#    raw_schema = session["user_schema"]
+    
+    raw_schema = get_active_schema(session,prompt)
     
     schema = parse_multi_table_schema(raw_schema)
-   
+    
+    print("PARSED SCHEMA =")
+    pprint.pprint(schema, sort_dicts=False)
+    
     query_plan = build_query_plan(
                     prompt,
                     schema
@@ -125,8 +174,10 @@ def ask_ai(prompt, session_id):
     # -------------------
     # MUST HAVE SCHEMA
     # -------------------
-    if not session.get("user_schema"):
 
+    raw_schema = get_active_schema(session,prompt)
+
+    if not raw_schema:
         return (
             "Schema information required.\n"
             "Please provide:\n"

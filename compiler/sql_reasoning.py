@@ -2,11 +2,13 @@ import re
 from core.config import (
     BUSINESS_KEYWORDS,
     BUSINESS_TERMS,
+    BUSINESS_TABLES,
     MEASURE_KEYWORDS,
     DATE_COLUMN_KEYWORDS,
     LIMIT_PATTERNS,
     RELATIONSHIP_SUFFIXES,
-    RELATIONSHIP_HINTS
+    RELATIONSHIP_HINTS,
+    DISPLAY_KEYWORDS
 )
 from schema.schema_utils import (
     extract_all_columns,
@@ -14,9 +16,12 @@ from schema.schema_utils import (
     get_columns_for_tables,
     is_relationship_column,
     strip_relationship_suffix,
-    extract_relationship_columns
+    extract_relationship_columns,
+    
+    build_display_targets
 )
 import traceback
+
 # --------------------------------------------------   
 def parse_multi_table_schema(schema_text: str):
 
@@ -40,24 +45,35 @@ def parse_multi_table_schema(schema_text: str):
         # MATCH TABLE STRUCTURE
         # -------------------------
 
-        match = re.match(r'(\w+)\s+columns\s+(.+)',block)
+#        match = re.match(r'(\w+)\s+columns\s+(.+)',block)
 
+        match = re.match(r'(\w+)\s+columns\s*(.*)',block,re.DOTALL)
+        
         if not match:
             continue
 
         table_name = match.group(1)
 
         columns_text = match.group(2)
+        
+        columns = []
 
-        columns = [
+        for col in re.split(r'[\n,]+',columns_text):
+        
+            col = col.strip()
+        
+            if col:
+                columns.append(col)
 
-            col.strip()
-
-            for col in columns_text.split(",")
-
-            if col.strip()
-
-        ]
+#        columns = [
+#
+#            col.strip()
+#
+#            for col in columns_text.split(",")
+#
+#            if col.strip()
+#
+#        ]
 
         result["tables"][table_name] = columns
 
@@ -214,6 +230,32 @@ def detect_required_tables(prompt, schema):
                 if t in tables:
     
                     required_tables.add(t)
+                    
+    # -------------------------
+    # BUSINESS TERMS
+    # -------------------------
+    
+    for business_term, aliases in BUSINESS_TERMS.items():
+    
+        for alias in aliases:
+ #--  
+            if alias in prompt_lower:
+    
+                candidate_tables = (
+                    BUSINESS_TABLES.get(
+                        business_term,
+                        []
+                    )
+                )
+    
+                for table_name in candidate_tables:
+    
+                    if table_name in tables:
+                        required_tables.add(
+                            table_name
+                        )
+    
+                break
                 
     # -------------------------
     # SAFE FALLBACK
@@ -509,8 +551,8 @@ def build_join_plan(
     # -------------------------
     # SINGLE TABLE
     # -------------------------
-#    print("REQUIRED =", required_tables)
-#    print("RELATIONSHIPS =", relationships)
+    print("REQUIRED =", required_tables)
+    print("RELATIONSHIPS =", relationships)
     
     if len(required_tables) <= 1:
 
@@ -601,34 +643,109 @@ def detect_count_target(prompt, semantic_targets):
 def detect_grouping_dimensions(
         prompt,
         semantic_targets,
+        display_targets,
         BUSINESS_TERMS
-    ):
-
+):
     prompt = prompt.lower()
-
-    dimensions = []
 
     words = prompt.split()
 
+    use_display = any(
+        word in words
+        for word in DISPLAY_KEYWORDS
+    )
+
+    dimensions = []
+
     for business_term, aliases in BUSINESS_TERMS.items():
-        
 
         for alias in aliases:
-            
-            
 
             if alias in words:
-            
-               
-                if business_term in semantic_targets:
 
-                    dimensions.append(
-                        semantic_targets[business_term]
-                    )
-                    
-                    break
-    
+                if use_display:
+
+                    if business_term in display_targets:
+
+                        dimensions.append(
+                            display_targets[
+                                business_term
+                            ]
+                        )
+
+                else:
+
+                    if business_term in semantic_targets:
+
+                        dimensions.append(
+                            semantic_targets[
+                                business_term
+                            ]
+                        )
+
+                break
+
     return dimensions
+    
+#def detect_grouping_dimensions(
+#        prompt,
+#        semantic_targets,
+#        display_targets,
+#        BUSINESS_TERMS
+#    ):
+#
+#    prompt = prompt.lower()
+#    
+#    dimensions = []
+#
+#
+#    words = prompt.split()
+#
+#    use_display = any( word in words for word in DISPLAY_KEYWORDS )
+#
+#    for business_term, aliases in BUSINESS_TERMS.items():
+#        
+#
+#        for alias in aliases:
+#            
+#            if alias in words:
+#
+#                if use_display:
+#            
+#                    if business_term in display_targets:
+#            
+#                        dimensions.append(
+#                            display_targets[
+#                                business_term
+#                            ]
+#                        )
+#            
+#                else:
+#            
+#                    if business_term in semantic_targets:
+#            
+#                        dimensions.append(
+#                            semantic_targets[
+#                                business_term
+#                            ]
+#                        )
+#            
+#                break
+#            
+#            
+#
+##            if alias in words:
+##            
+##               
+##                if business_term in semantic_targets:
+##
+##                    dimensions.append(
+##                        semantic_targets[business_term]
+##                    )
+##                    
+##                    break
+#    
+#    return dimensions
 #------------------------------------------------------------
 def detect_aggregation_function(prompt):
 
@@ -813,7 +930,6 @@ def build_semantic_targets(schema, BUSINESS_TERMS):
         
         root = strip_relationship_suffix(col)
         
-#        root = col.replace("_id", "")
         count_targets[root] = col
 
     # -----------------------------
@@ -885,42 +1001,48 @@ def prepare_query_context(prompt,schema):
         required_tables = detect_required_tables(prompt,schema)
     
         relationships = detect_relationships(schema)
-        
-    
+        #------------------------------------------
+        print("SCHEMA =", schema)
+        print("REQUIRED =", required_tables)
+        #---------------------------------------
         join_plan = None
-#        join_plan = {}
     
         if len(required_tables) > 1:
-        
+
             join_plan = build_join_plan(
                 required_tables,
                 relationships
             )
             
-#            print("JOIN_PLAN =", join_plan)
             
         columns = get_columns_for_tables(
                     schema,
                     required_tables
                 )
+                
+        display_targets = (
+                build_display_targets(
+                    schema,
+                    BUSINESS_TERMS
+                )
+            )
         
         alias_map = build_alias_map(
                         required_tables
                     )
+        
+        
             
         semantic_targets = build_semantic_targets(schema, BUSINESS_TERMS)
-        
-    
-    
 
-    
         return {
             "required_tables": required_tables,
             "relationships": relationships,
             "join_plan": join_plan,
             "columns": columns,
             "alias_map": alias_map,
-            "semantic_targets": semantic_targets
+            "semantic_targets": semantic_targets,
+            "display_targets": display_targets
         }
     except Exception as e:
         traceback.print_exc()
@@ -1023,10 +1145,8 @@ def resolve_dimensions(
     )
 
 #--------------------------------------------------------------------------
-def discover_relationships(
-    schema,
-    relationship_hints=None
-):
+def discover_relationships( schema, relationship_hints=None):
+            
     if relationship_hints is None:
         relationship_hints = {}
         
@@ -1036,8 +1156,6 @@ def discover_relationships(
         schema.keys()
     )
     
-#    print("SCHEMA = ",schema)
-#    print("TABLES = ", tables)
     for i in range(len(tables)):
 
         left_table = tables[i]
@@ -1045,8 +1163,6 @@ def discover_relationships(
         for j in range(i + 1, len(tables)):
     
             right_table = tables[j]
-    
-#            print(left_table, "----", right_table)
     
             left_columns = set(
                 schema[left_table]
@@ -1063,9 +1179,6 @@ def discover_relationships(
     
             for column in common_columns:
     
-#                if not column.endswith("_id"):
-#                    continue
-    
                 if not is_relationship_column(column):
                     continue
                     
@@ -1077,7 +1190,6 @@ def discover_relationships(
                     "left_column": column,
                     "right_column": column
                 })
-#                print("COMMON:",left_table,right_table,common_columns)
         
     return relationships
 #--------------------------------------------------------------------------
@@ -1098,35 +1210,16 @@ def build_query_plan(prompt: str, schema: dict):
     except Exception as e:
         traceback.print_exc()
     
-    #----------------------------------------
-#    SCHEMA = {
-#
-#    "sales_tbl": [
-#        "sale_no",
-#        "cust_no",
-#        "prod_id",
-#        "qty"
-#    ],
-#
-#    "customer_tbl": [
-#        "cust_no",
-#        "cust_name"
-#    ],
-#
-#    "product_tbl": [
-#        "prod_id",
-#        "prod_name"
-#    ]
-#}
-#
-#    print("DISCOVER_RELATIONSHIPS = ",discover_relationships(SCHEMA))
-    #-----------------------------------------
     required_tables = context["required_tables"]
     relationships = context["relationships"]
     join_plan = context["join_plan"]
     columns = context["columns"]
     alias_map = context["alias_map"]
     semantic_targets = context["semantic_targets"]
+    
+    display_targets = (context["display_targets"])
+    
+    print("DISPLAY_TARGETS =", display_targets)
     
     aggregation_function = detect_aggregation_function(prompt)
     
@@ -1163,6 +1256,7 @@ def build_query_plan(prompt: str, schema: dict):
     group_dimensions = detect_grouping_dimensions(
         group_source,
         semantic_targets,
+        display_targets,
         BUSINESS_TERMS
     )
 
@@ -1203,10 +1297,16 @@ def build_query_plan(prompt: str, schema: dict):
         }
     
     date_columns = detect_date_columns(columns)
+    
+#    print("COLUMNS =", columns)
+#    print("DATE_COLUMNS =", date_columns)
 
     # -------------------
     # MEASURES
     # -------------------
+#    print("COLUMNS =", columns)
+#    print("REQUIRED =", required_tables)
+    
     measures = detect_measures(columns)
     
     has_aggregation = (
@@ -1270,6 +1370,11 @@ def build_query_plan(prompt: str, schema: dict):
     # -------------------
     # RETURN PLAN
     # -------------------
+#    print("REQUIRED =", required_tables)
+#    print("COLUMNS =", columns)
+#    print("MEASURES =", measures)
+#    print("DIMENSIONS =", dimensions)
+#    print("GROUP_DIMENSIONS =", group_dimensions)
     
     return {
         "intent": intent,

@@ -250,27 +250,65 @@ http://127.0.0.1:8000
 The DataNex AI web interface will be available in your browser, 
 allowing you to start generating IBM Informix SQL from natural language queries.
 
+## Current Capabilities
+
+- ✅ Natural language to IBM Informix SQL
+- ✅ Single-table and multi-table queries
+- ✅ Automatic INNER JOIN generation
+- ✅ Relationship discovery
+- ✅ Display-column resolution (e.g., product name, customer name)
+- ✅ Aggregation (SUM, COUNT, AVG, MIN, MAX)
+- ✅ GROUP BY and HAVING
+- ✅ Time-based filtering
+- ✅ Ranking queries (Top / Bottom)
+- ✅ AST-based SQL compilation
+- ✅ Golden Test regression suite
+
 ## Example Usage
 
-The following example demonstrates how DataNex AI transforms a natural
-language request into production-ready IBM Informix SQL.
+DataNex AI converts natural language requests into IBM Informix SQL through a structured reasoning pipeline.
 
-### Natural Language Request
+### Option 1 — Using the Built-in Demo Schemas
 
-First, provide the database schema:
+For common demonstrations (such as Sales or Production), simply enter a natural language request:
 
 ```text
-table prod_tbl columns factory_id, prod_id, prod_date, qty
-table prod_desc columns prod_id, prod_name
+total production by product name
 ```
 
-Then enter the natural language request:
+DataNex AI automatically selects the appropriate demo schema, detects table relationships, builds the required JOINs, and generates Informix SQL.
+
+### Option 2 — Using Your Own Database Schema
+
+For your own database, provide the schema once at the beginning of the conversation:
+
+```text
+table prod_tbl
+columns
+factory_id
+prod_id
+prod_date
+qty
+
+table prod_desc
+columns
+prod_id
+prod_name
+```
+
+Then ask your question naturally:
 
 ```text
 total production by factory
 ```
 
-> **Note:** In the current beta release, DataNex AI requires schema information to be provided in the prompt before generating SQL. This allows the compiler pipeline to build a validated AST and produce reliable IBM Informix SQL.
+DataNex AI stores the schema for the current session and uses it to generate validated IBM Informix SQL for subsequent requests.
+
+> **Current Beta Behavior**
+>
+> * Built-in demo schemas are used automatically for supported demonstration domains.
+> * For custom databases, provide your schema once per session.
+> * Future versions will support automatic schema discovery directly from IBM Informix system catalogs.
 
 ### Generated SQL
 
@@ -405,43 +443,49 @@ naming conventions, and best practices, see:
 
 ## Roadmap
 
-DataNex AI is an evolving project. The following roadmap outlines the
-planned direction of development while maintaining the project's focus
-on reliability, modularity, and high-quality IBM Informix SQL generation.
+DataNex AI is an evolving project focused on reliable, explainable, and maintainable IBM Informix SQL generation. The roadmap reflects both completed milestones and planned enhancements.
 
-### Beta
+### Beta (Completed)
 
 * [x] Natural language to IBM Informix SQL
 * [x] AST-based SQL compilation
 * [x] Query validation
 * [x] Golden Test regression suite
 * [x] Modular compiler architecture
+* [x] Multi-table query support
+* [x] Relationship discovery
+* [x] JOIN planning and compilation
+* [x] Display-column resolution
+* [x] Demo schema support
 * [x] Comprehensive project documentation
 
 ### Version 1.0
 
-* [ ] Multi-table query support
-* [ ] Advanced JOIN reasoning
-* [ ] Expanded IBM Informix SQL support
+* [ ] Enhanced semantic reasoning
+* [ ] Cross-domain query understanding
 * [ ] Improved schema understanding
 * [ ] Improved natural language understanding
+* [ ] Advanced aggregation and HAVING support
+* [ ] Expanded IBM Informix SQL coverage
 * [ ] Larger Golden Test coverage
 * [ ] Enhanced compiler diagnostics and error handling
+* [ ] Domain-aware schema selection
 
 ### Future Releases
 
-* [ ] Database connectivity
-* [ ] Interactive schema discovery
+* [ ] Direct IBM Informix database connectivity
+* [ ] Automatic schema discovery from system catalogs
+* [ ] Interactive schema exploration
 * [ ] Conversation history
 * [ ] User authentication
 * [ ] Web deployment
 * [ ] SaaS platform
 * [ ] Query explanation and AST visualization
+* [ ] Semantic business glossary support
 
-The roadmap reflects the current direction of the project and will
-continue to evolve as new compiler capabilities and architectural
-improvements are introduced.
-
+The roadmap reflects the current direction of the project and 
+will continue to evolve as new compiler capabilities, reasoning features, 
+and architectural improvements are introduced.
 
 ## Contributing
 

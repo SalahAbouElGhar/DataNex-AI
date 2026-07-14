@@ -10,6 +10,8 @@ MAX_HISTORY = int(os.getenv("MAX_HISTORY", 10))
 if not MODEL_NAME:
     raise ValueError("GROQ_MODEL_NAME is not set")
 #-------------------------------------------------
+# Keyword -> Candidate Tables
+
 BUSINESS_KEYWORDS = {
     "production": ["prod_tbl"],
     "production data": ["prod_tbl"],
@@ -17,6 +19,30 @@ BUSINESS_KEYWORDS = {
     "products": ["prod_tbl"]
 }
 #-------------------------------------------------
+DOMAIN_KEYWORDS = {
+     "employees": [
+        "employee",
+        "employees",
+        "staff",
+        "worker"
+    ],
+
+    "sales": [
+        "sales",
+        "sale",
+        "revenue",
+        "income"
+    ],
+
+    "production": [
+        "production",
+        "produce",
+        "factory",
+        "manufacturing",
+        "product"
+    ]
+}
+#---------------------------------------------------
 BUSINESS_TERMS = {
 
     "factory": [
@@ -38,6 +64,33 @@ BUSINESS_TERMS = {
         "customers",
         "cust",
         "client"
+    ]
+}
+#------------------------------------------------
+BUSINESS_TABLES = {
+
+    "factory": [
+        "prod_tbl"
+    ],
+
+    "product": [
+        "product_tbl",
+        "prod_desc",
+        "prod_tbl"
+    ],
+
+    "customer": [
+        "customer_tbl",
+        "sales_tbl"
+    ],
+    "supplier": [
+        "supplier_tbl",
+        "purchase_tbl"
+    ],
+
+    "employee": [
+        "employee_tbl",
+        "payroll_tbl"
     ]
 }
 #------------------------------------------------
@@ -104,3 +157,65 @@ RELATIONSHIP_SUFFIXES = [
     "_cod"
 ]
 #------------------------------------------------------
+DISPLAY_SUFFIXES = [
+    "_name",
+    "_desc",
+    "_title",
+    "_text",
+    "_label"
+]
+#------------------------------------------------------
+DEMO_SCHEMAS = {
+
+    "sales_demo": {
+    "description":"Demo schema for sales reporting",
+    "schema": """
+table sales_tbl
+columns
+sale_no
+cust_no
+prod_id
+sales_amount
+sale_date
+
+table customer_tbl
+columns
+cust_no
+cust_name
+
+table product_tbl
+columns
+prod_id
+prod_name
+"""
+    },
+
+    "production_demo": {
+    "description":"Demo schema for production reporting",
+    "schema": """
+table prod_tbl
+columns
+factory_id
+prod_id
+prod_date
+qty
+
+table prod_desc
+columns
+prod_id
+prod_name
+"""
+    }
+
+}
+
+DEFAULT_DEMO_SCHEMA = "sales_demo"
+
+ENABLE_DEMO_SCHEMA_FALLBACK = True
+#-----------------------------------------------------------
+DISPLAY_KEYWORDS = [
+    "name",
+    "names",
+    "description",
+    "desc"
+]

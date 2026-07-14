@@ -1,3 +1,21 @@
+from core.config import (
+    DOMAIN_KEYWORDS
+)
+"""
+Legacy / Future Hybrid AI Prompt Layer
+
+Currently DataNex uses:
+
+Prompt
+→ Query Plan
+→ AST
+→ SQL Compiler
+
+This module may be reused later for:
+- Complex reasoning
+- Ambiguous requests
+- Hybrid AI mode
+"""
 # =========================
 # SYSTEM PROMPT
 # =========================
@@ -37,7 +55,8 @@ Return one valid executable SQL query only.
 # =========================
 # DATABASE SCHEMAS
 # =========================
-
+# Legacy demo definitions
+# May be removed after Demo Schema migration
 SCHEMAS = {
     "employees": """
 employees(
@@ -55,20 +74,20 @@ sales(
 """
 }
 #------------------------------------------------------------
-DOMAIN_KEYWORDS = {
-    "employees": [
-        "employee",
-        "employees",
-        "staff",
-        "worker"
-    ],
-
-    "sales": [
-        "sales",
-        "revenue",
-        "income"
-    ]
-}
+#DOMAIN_KEYWORDS = {
+#    "employees": [
+#        "employee",
+#        "employees",
+#        "staff",
+#        "worker"
+#    ],
+#
+#    "sales": [
+#        "sales",
+#        "revenue",
+#        "income"
+#    ]
+#}
 #--------------------------------------------
 GENERIC_MODE_RESPONSE = """
 Schema information required.
@@ -89,24 +108,61 @@ def detect_domain(prompt):
 
     return "generic"
 #-------------------------------------------------------------
-def build_schema_context(schema: dict, query_plan: dict):
+#def build_schema_context(schema: dict, query_plan: dict):
+#
+#    return {
+#        "role": "system",
+#        "content": f"""
+#        USER SCHEMA:
+#        
+#        Table: {schema.get('table')}
+#        Columns: {", ".join(schema.get('columns', []))}
+#        
+#        QUERY PLAN:
+#        {query_plan}
+#        
+#        STRICT RULES:
+#        - Use ONLY provided schema
+#        - Do NOT invent tables
+#        - Do NOT invent columns
+#        - Follow query plan strictly
+#        """
+#    }
+def build_schema_context(schema,query_plan):
+
+    tables = schema.get(
+        "tables",
+        {}
+    )
+
+    schema_text = ""
+
+    for table_name, columns in tables.items():
+
+        schema_text += (
+            f"Table: {table_name}\n"
+        )
+
+        schema_text += (
+            f"Columns: "
+            f"{', '.join(columns)}\n\n"
+        )
 
     return {
         "role": "system",
         "content": f"""
-        USER SCHEMA:
-        
-        Table: {schema.get('table')}
-        Columns: {", ".join(schema.get('columns', []))}
-        
-        QUERY PLAN:
-        {query_plan}
-        
-        STRICT RULES:
-        - Use ONLY provided schema
-        - Do NOT invent tables
-        - Do NOT invent columns
-        - Follow query plan strictly
-        """
+USER SCHEMA:
+
+{schema_text}
+
+QUERY PLAN:
+{query_plan}
+
+STRICT RULES:
+- Use ONLY provided schema
+- Do NOT invent tables
+- Do NOT invent columns
+- Follow query plan strictly
+"""
     }
 #------------------------------------------------------------
