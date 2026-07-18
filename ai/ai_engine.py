@@ -28,7 +28,8 @@ import traceback
 from core.config import (
     DEMO_SCHEMAS,
     DEFAULT_DEMO_SCHEMA,
-    ENABLE_DEMO_SCHEMA_FALLBACK
+    ENABLE_DEMO_SCHEMA_FALLBACK,
+    DOMAINS
 )
 #-------------------------------------------------------
 sessions = {}
@@ -44,41 +45,35 @@ def get_session(session_id):
 
     return sessions[session_id]
 #-------------------------------------------------------
+
 def select_demo_schema(prompt):
 
     domain = detect_domain(prompt)
     
-    print("DOMAIN =", domain)
+    print(" DOMAIN =", domain)
+    
+    if domain == "generic":
+        return None
 
-    if domain == "production":
-        return "production_demo"
-
-    if domain == "sales":
-        return "sales_demo"
-
-    return DEFAULT_DEMO_SCHEMA
+    return DOMAINS[domain]["demo_schema"]
+#    return (
+#        DOMAINS
+#        .get(domain, {})
+#        .get("demo_schema", DEFAULT_DEMO_SCHEMA)
+#    )
 #-------------------------------------------------------
 def get_active_schema(session,prompt):
     
     if session.get("user_schema"):
         return session["user_schema"]
+        
+    demo_name = select_demo_schema(prompt)
 
-    if ENABLE_DEMO_SCHEMA_FALLBACK:
-
-        demo_name = select_demo_schema(prompt)
-
+    if demo_name:
         return DEMO_SCHEMAS[demo_name]["schema"]
-
+    
     return None
 
-#    if session.get("user_schema"):
-#        return session["user_schema"]
-#
-#    if ENABLE_DEMO_SCHEMA_FALLBACK:
-#
-#        return DEMO_SCHEMAS[DEFAULT_DEMO_SCHEMA]["schema"]
-#
-#    return None
 
 #-----------------------------------------------------------
 def add_user_message(session, prompt):
@@ -129,7 +124,7 @@ def create_query_plan(session, prompt):
     
     schema = parse_multi_table_schema(raw_schema)
     
-    print("PARSED SCHEMA =")
+#    print("PARSED SCHEMA =")
     pprint.pprint(schema, sort_dicts=False)
     
     query_plan = build_query_plan(

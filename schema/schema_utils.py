@@ -1,6 +1,5 @@
 # schema_utils.py
 from core.config import (
-    BUSINESS_KEYWORDS,
     BUSINESS_TERMS,
     MEASURE_KEYWORDS,
     DATE_COLUMN_KEYWORDS,
@@ -18,16 +17,7 @@ def extract_all_columns(schema):
         all_columns.extend(cols)
 
     return list(set(all_columns))
-#-------------------------------------------------------
-#def extract_id_columns(all_columns):
-#    
-#    id_columns = []
-#
-#    for col in all_columns:
-#        if col.endswith("_id"):
-#            id_columns.append(col)
-#
-#    return id_columns
+
 #-------------------------------------------------------
 def get_column_owner(column,schema):
 
@@ -179,19 +169,7 @@ def strip_display_suffix(column):
 
     return column
 #--------------------------------------------------
-#def extract_display_columns(
-#    all_columns
-#):
-#
-#    display_columns = []
-#
-#    for col in all_columns:
-#
-#        if is_display_column(col):
-#            display_columns.append(col)
-#
-#    return display_columns
-##--------------------------------------------------
+
 def extract_display_columns(
     all_columns
 ):

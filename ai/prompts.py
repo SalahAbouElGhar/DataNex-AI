@@ -1,5 +1,5 @@
 from core.config import (
-    DOMAIN_KEYWORDS
+    DOMAINS
 )
 """
 Legacy / Future Hybrid AI Prompt Layer
@@ -52,43 +52,9 @@ OUTPUT:
 Return one valid executable SQL query only.
 """
 }
-# =========================
-# DATABASE SCHEMAS
-# =========================
-# Legacy demo definitions
-# May be removed after Demo Schema migration
-SCHEMAS = {
-    "employees": """
-employees(
-    employee_number,
-    name,
-    date_of_birth
-)
-""",
 
-    "sales": """
-sales(
-    sales_amount,
-    sales_date
-)
-"""
-}
 #------------------------------------------------------------
-#DOMAIN_KEYWORDS = {
-#    "employees": [
-#        "employee",
-#        "employees",
-#        "staff",
-#        "worker"
-#    ],
-#
-#    "sales": [
-#        "sales",
-#        "revenue",
-#        "income"
-#    ]
-#}
-#--------------------------------------------
+
 GENERIC_MODE_RESPONSE = """
 Schema information required.
 
@@ -97,37 +63,22 @@ Please provide:
 - relevant column names
 """
 #--------------------------------------------
+    
 def detect_domain(prompt):
 
     prompt = prompt.lower()
 
-    for domain, keywords in DOMAIN_KEYWORDS.items():
+    for domain_name, domain_config in DOMAINS.items():
 
-        if any(word in prompt for word in keywords):
-            return domain
+        if any(
+            keyword in prompt
+            for keyword in domain_config["keywords"]
+        ):
+            return domain_name
 
     return "generic"
 #-------------------------------------------------------------
-#def build_schema_context(schema: dict, query_plan: dict):
-#
-#    return {
-#        "role": "system",
-#        "content": f"""
-#        USER SCHEMA:
-#        
-#        Table: {schema.get('table')}
-#        Columns: {", ".join(schema.get('columns', []))}
-#        
-#        QUERY PLAN:
-#        {query_plan}
-#        
-#        STRICT RULES:
-#        - Use ONLY provided schema
-#        - Do NOT invent tables
-#        - Do NOT invent columns
-#        - Follow query plan strictly
-#        """
-#    }
+
 def build_schema_context(schema,query_plan):
 
     tables = schema.get(

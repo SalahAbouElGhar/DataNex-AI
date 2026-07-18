@@ -26,18 +26,6 @@ def validate_query_plan(query_plan):
         []
     )
     
-#    join_plan = query_plan.get(
-#        "join_plan"
-#    )
-    
-
-    #--------------------------------------------
-    
-#    if has_aggregation and not measures:
-#    
-#        errors.append(
-#            "Aggregation requires measure"
-#        )
     #--------------------------------------------        
         
     for measure in measures:
@@ -99,23 +87,23 @@ def validate_sql(sql: str, query_plan: dict):
 
     sql_upper = sql.upper()
 
-    # -------------------------
-    # RULE 1: Aggregation check
-    # -------------------------
+
+# RULE 1: Aggregation check
+
     if query_plan.get("has_aggregation"):
 
         if "GROUP BY" not in sql_upper:
             raise Exception("Invalid SQL: missing GROUP BY")
 
-    # -------------------------
-    # RULE 2: SELECT only
-    # -------------------------
+
+# RULE 2: SELECT only
+ 
     if not sql_upper.strip().startswith("SELECT"):
         raise Exception("Only SELECT queries allowed")
 
-    # -------------------------
-    # RULE 3: No forbidden keywords
-    # -------------------------
+ 
+# RULE 3: No forbidden keywords
+   
     forbidden = ["DELETE", "UPDATE", "INSERT", "DROP"]
 
     for word in forbidden:

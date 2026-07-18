@@ -1,14 +1,15 @@
 import re
 from core.config import (
-    BUSINESS_KEYWORDS,
+#    BUSINESS_KEYWORDS,
     BUSINESS_TERMS,
-    BUSINESS_TABLES,
+#    BUSINESS_TABLES,
     MEASURE_KEYWORDS,
     DATE_COLUMN_KEYWORDS,
     LIMIT_PATTERNS,
     RELATIONSHIP_SUFFIXES,
     RELATIONSHIP_HINTS,
-    DISPLAY_KEYWORDS
+    DISPLAY_KEYWORDS,
+    DOMAINS
 )
 from schema.schema_utils import (
     extract_all_columns,
@@ -20,6 +21,10 @@ from schema.schema_utils import (
     
     build_display_targets
 )
+from ai.prompts import (
+    
+    detect_domain
+    )
 import traceback
 
 # --------------------------------------------------   
@@ -29,9 +34,9 @@ def parse_multi_table_schema(schema_text: str):
 
     result = {"tables": {}}
 
-    # -------------------------
-    # SPLIT TABLE BLOCKS
-    # -------------------------
+
+# SPLIT TABLE BLOCKS
+
 
     blocks = re.split(r'\btable\b', schema_text)
 
@@ -64,16 +69,6 @@ def parse_multi_table_schema(schema_text: str):
         
             if col:
                 columns.append(col)
-
-#        columns = [
-#
-#            col.strip()
-#
-#            for col in columns_text.split(",")
-#
-#            if col.strip()
-#
-#        ]
 
         result["tables"][table_name] = columns
 
@@ -198,16 +193,13 @@ def detect_relationships(schema):
 
     return relationships
 #--------------------------------------------------
-def detect_required_tables(prompt, schema):
+def detect_tables_from_columns(prompt,schema):
 
     prompt_lower = prompt.lower()
 
     tables = schema["tables"]
 
     required_tables = set()
-    # -------------------------
-    # COLUMN MATCHING
-    # -------------------------
 
     for table_name, columns in tables.items():
 
@@ -215,64 +207,91 @@ def detect_required_tables(prompt, schema):
 
             if column.lower() in prompt_lower:
 
-                if table_name not in required_tables:
-                    required_tables.add(table_name)
+                required_tables.add(table_name)
 
-    # -------------------------
-    # BUSINESS KEYWORDS
-    # -------------------------
-    for keyword, related_tables in BUSINESS_KEYWORDS.items():
+    return required_tables
+#---------------------------------------------------
 
-        if keyword in prompt_lower:
-    
-            for t in related_tables:
-    
-                if t in tables:
-    
-                    required_tables.add(t)
-                    
-    # -------------------------
-    # BUSINESS TERMS
-    # -------------------------
-    
-    for business_term, aliases in BUSINESS_TERMS.items():
-    
+def extract_words(text):
+
+    return re.findall(r"\w+", text.lower())
+
+#---------------------------------------------------
+def resolve_tables_from_entities(
+    prompt,
+    schema
+):
+
+    words = extract_words(prompt)
+
+    tables = schema["tables"]
+
+    domain = detect_domain(prompt)
+
+    domain_entities = (
+        DOMAINS
+        .get(domain, {})
+        .get("entities", {})
+    )
+
+    required_tables = set()
+
+    for entity, candidate_tables in domain_entities.items():
+
+        aliases = BUSINESS_TERMS.get(entity, [])
+
         for alias in aliases:
- #--  
-            if alias in prompt_lower:
-    
-                candidate_tables = (
-                    BUSINESS_TABLES.get(
-                        business_term,
-                        []
-                    )
-                )
-    
+
+            if alias in words:
+
                 for table_name in candidate_tables:
-    
+
                     if table_name in tables:
-                        required_tables.add(
-                            table_name
-                        )
-    
+
+                        required_tables.add(table_name)
+
                 break
-                
-    # -------------------------
-    # SAFE FALLBACK
-    # -------------------------
 
-    if not required_tables:
+    return required_tables
+#---------------------------------------------------
+def detect_default_table(schema):
+    
+#    return [list(schema["tables"])[0]]
 
-        # default to first table
-        first_table = list(
-            tables.keys()
-        )[0]
+    return [next(iter(schema["tables"]))]   
+    
+#--------------------------------------------------
+def detect_required_tables(prompt,schema):
+# In the futcher     
+#    for detector in (
+#    detect_tables_from_columns,
+#    resolve_tables_from_entities,
+#    ):
+#
+#        result = detector(prompt, schema)
+#
+#        if result:
+#            return sorted(result)
+#    
+#    return detect_default_table(schema)
 
-        required_tables.add(
-            first_table
-        )
+# 1. Column matching
+ 
+    required_tables = detect_tables_from_columns(prompt,schema)
+    
+    if required_tables:
+        return sorted(required_tables)
 
-    return sorted(required_tables)
+# 2. Entity matching
+
+    required_tables = resolve_tables_from_entities(prompt,schema )
+    
+    if required_tables:
+        return sorted(required_tables)
+
+# 3. Fallback
+
+    return detect_default_table(schema)
     
 #---------------------------------------------------
 def build_alias_map(required_tables):
@@ -551,8 +570,8 @@ def build_join_plan(
     # -------------------------
     # SINGLE TABLE
     # -------------------------
-    print("REQUIRED =", required_tables)
-    print("RELATIONSHIPS =", relationships)
+    print(" REQUIRED =", required_tables)
+    print(" RELATIONSHIPS =", relationships)
     
     if len(required_tables) <= 1:
 
@@ -686,66 +705,6 @@ def detect_grouping_dimensions(
                 break
 
     return dimensions
-    
-#def detect_grouping_dimensions(
-#        prompt,
-#        semantic_targets,
-#        display_targets,
-#        BUSINESS_TERMS
-#    ):
-#
-#    prompt = prompt.lower()
-#    
-#    dimensions = []
-#
-#
-#    words = prompt.split()
-#
-#    use_display = any( word in words for word in DISPLAY_KEYWORDS )
-#
-#    for business_term, aliases in BUSINESS_TERMS.items():
-#        
-#
-#        for alias in aliases:
-#            
-#            if alias in words:
-#
-#                if use_display:
-#            
-#                    if business_term in display_targets:
-#            
-#                        dimensions.append(
-#                            display_targets[
-#                                business_term
-#                            ]
-#                        )
-#            
-#                else:
-#            
-#                    if business_term in semantic_targets:
-#            
-#                        dimensions.append(
-#                            semantic_targets[
-#                                business_term
-#                            ]
-#                        )
-#            
-#                break
-#            
-#            
-#
-##            if alias in words:
-##            
-##               
-##                if business_term in semantic_targets:
-##
-##                    dimensions.append(
-##                        semantic_targets[business_term]
-##                    )
-##                    
-##                    break
-#    
-#    return dimensions
 #------------------------------------------------------------
 def detect_aggregation_function(prompt):
 
