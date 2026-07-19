@@ -1,6 +1,8 @@
 from core.config import (
     DOMAINS
 )
+from compiler.sql_reasoning import detect_domain
+#-------------------------------------
 """
 Legacy / Future Hybrid AI Prompt Layer
 
@@ -64,19 +66,7 @@ Please provide:
 """
 #--------------------------------------------
     
-def detect_domain(prompt):
 
-    prompt = prompt.lower()
-
-    for domain_name, domain_config in DOMAINS.items():
-
-        if any(
-            keyword in prompt
-            for keyword in domain_config["keywords"]
-        ):
-            return domain_name
-
-    return "generic"
 #-------------------------------------------------------------
 
 def build_schema_context(schema,query_plan):
