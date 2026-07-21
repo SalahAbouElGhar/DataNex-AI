@@ -50,17 +50,13 @@ def select_demo_schema(prompt):
 
     domain = detect_domain(prompt)
     
-    print(" DOMAIN =", domain)
+#    print(" DOMAIN =", domain)
     
     if domain == "generic":
         return None
 
     return DOMAINS[domain]["demo_schema"]
-#    return (
-#        DOMAINS
-#        .get(domain, {})
-#        .get("demo_schema", DEFAULT_DEMO_SCHEMA)
-#    )
+
 #-------------------------------------------------------
 def get_active_schema(session,prompt):
     
@@ -124,7 +120,6 @@ def create_query_plan(session, prompt):
     
     schema = parse_multi_table_schema(raw_schema)
     
-#    print("PARSED SCHEMA =")
     pprint.pprint(schema, sort_dicts=False)
     
     query_plan = build_query_plan(

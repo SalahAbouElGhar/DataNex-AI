@@ -238,9 +238,7 @@ DOMAINS = {
         "keywords": [
             "production",
             "produce",
-            "factory",
-            "manufacturing",
-            "product"
+            "manufacturing"
         ],
 
         "tables": [

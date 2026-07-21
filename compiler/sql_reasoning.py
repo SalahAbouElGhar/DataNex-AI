@@ -100,7 +100,8 @@ def parse_multi_table_schema(schema_text: str):
 # ===============================
 # DOMAIN
 # ===============================
-def detect_domain(prompt):
+
+def detect_domain_from_keywords(prompt):
 
     prompt = prompt.lower()
 
@@ -112,7 +113,58 @@ def detect_domain(prompt):
         ):
             return domain_name
 
+    return None
+#---------------------------------------------------------
+def detect_domain_from_entities(prompt):
+
+    words = extract_words(prompt)
+
+    best_domain = None
+    best_score = 0
+
+    for domain_name, domain_config in DOMAINS.items():
+
+        score = 0
+
+        entities = domain_config.get("entities", {})
+
+        for entity in entities:
+
+            aliases = BUSINESS_TERMS.get(entity, [])
+
+            if any(alias in words for alias in aliases):
+
+                score += 1
+
+        if score > best_score:
+
+            best_score = score
+            best_domain = domain_name
+
+    if best_score == 0:
+        return None
+
+    return best_domain
+
+#---------------------------------------------------------
+def detect_domain(prompt):
+
+    for detector in (
+
+        detect_domain_from_keywords,
+
+        detect_domain_from_entities,
+
+    ):
+
+        domain = detector(prompt)
+  
+        if domain:
+            return domain
+
     return "generic"
+    
+                                                                    
 # ===============================
 # TABLE DETECTION
 # ===============================
@@ -480,9 +532,7 @@ def prepare_query_context(prompt,schema):
         required_tables = resolve_required_tables(prompt,schema)
     
         relationships = detect_relationships(schema)
-        #------------------------------------------
-        print("SCHEMA =", schema)
-        print("REQUIRED =", required_tables)
+
         #---------------------------------------
         join_plan = None
     
@@ -564,6 +614,7 @@ def resolve_grouping_dimensions(
         display_targets,
         BUSINESS_TERMS
 ):
+
     prompt = prompt.lower()
 
     words = prompt.split()
@@ -586,20 +637,24 @@ def resolve_grouping_dimensions(
                     if business_term in display_targets:
 
                         dimensions.append(
-                            display_targets[
-                                business_term
-                            ]
+                            display_targets[ business_term  ]
                         )
+                    elif business_term in semantic_targets:
+
+                        dimensions.append(
+                            semantic_targets[business_term]
+                        )                                                                    
 
                 else:
 
                     if business_term in semantic_targets:
 
                         dimensions.append(
-                            semantic_targets[
-                                business_term
-                            ]
+                            semantic_targets[business_term]
                         )
+
+
+
 
                 break
 
@@ -1092,8 +1147,6 @@ def build_join_plan(
     # -------------------------
     # SINGLE TABLE
     # -------------------------
-    print(" REQUIRED =", required_tables)
-    print(" RELATIONSHIPS =", relationships)
     
     if len(required_tables) <= 1:
 
@@ -1200,8 +1253,6 @@ def build_query_plan(prompt: str, schema: dict):
     
     display_targets = (context["display_targets"])
     
-    print("DISPLAY_TARGETS =", display_targets)
-    
     aggregation_function = resolve_aggregation_function(prompt)
     
     count_target = None
@@ -1279,14 +1330,9 @@ def build_query_plan(prompt: str, schema: dict):
     
     date_columns = extract_date_columns(columns)
     
-#    print("COLUMNS =", columns)
-#    print("DATE_COLUMNS =", date_columns)
-
     # -------------------
     # MEASURES
     # -------------------
-#    print("COLUMNS =", columns)
-#    print("REQUIRED =", required_tables)
     
     measures = extract_measure_columns(columns)
     
@@ -1351,12 +1397,7 @@ def build_query_plan(prompt: str, schema: dict):
     # -------------------
     # RETURN PLAN
     # -------------------
-#    print("REQUIRED =", required_tables)
-#    print("COLUMNS =", columns)
-#    print("MEASURES =", measures)
-#    print("DIMENSIONS =", dimensions)
-#    print("GROUP_DIMENSIONS =", group_dimensions)
-    
+   
     return {
         "intent": intent,
         "measures": measures,
