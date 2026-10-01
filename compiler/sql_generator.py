@@ -74,11 +74,11 @@ def build_select_clause(query_plan):
     dimensions = query_plan["dimensions"]
 
     measures = query_plan["measures"]
-    
+
     schema = query_plan["schema"]
 
     alias_map = query_plan["alias_map"]
-    
+
     limit_strategy = query_plan["limit_strategy"]
 
     select_parts = []
@@ -95,9 +95,9 @@ def build_select_clause(query_plan):
                 column,
                 schema
             )
-        
+
             alias = alias_map.get(owner)
-        
+
             select_parts.append(
                 f"{alias}.{column}"
             )
@@ -109,7 +109,7 @@ def build_select_clause(query_plan):
                     query_plan["aggregation_function"],
                     query_plan
                 )
-        
+
             alias_expr = build_aggregation_alias(
                 query_plan["aggregation_function"],
                 measure,
@@ -131,7 +131,7 @@ def build_select_clause(query_plan):
                 query_plan["aggregation_function"],
                 query_plan
             )
-        
+
             alias_expr = build_aggregation_alias(
                 query_plan["aggregation_function"],
                 measure,
@@ -152,41 +152,41 @@ def build_select_clause(query_plan):
                 column,
                 schema
             )
-        
+
             alias = alias_map.get(owner)
-        
+
             select_parts.append(
                 f"{alias}.{column}"
             )
-        
+
         for measure in measures:
-        
+
             owner = get_column_owner(
                 measure,
                 schema
             )
-        
+
             alias = alias_map.get(owner)
-        
+
             select_parts.append(
                 f"{alias}.{measure}"
             )
     select_clause = ",\n  ".join(select_parts)
 
     select_keyword = "SELECT"
-    
+
     limit_clause = ""
 
     if limit_strategy:
-    
+
         limit_clause = build_limit_clause(
             query_plan
         )
-    
+
         if limit_clause:
-    
+
             select_keyword += f" {limit_clause}"
-     
+
     return f"{select_keyword}\n  {select_clause}"
 #--------------------------------------------------
 def build_join_clause(
@@ -227,9 +227,9 @@ ON {left_alias}.{left_column}
 def build_from_clause(query_plan):
 
     required_tables = query_plan["required_tables"]
-    
+
     table = required_tables[0]
-    
+
     alias_map = query_plan["alias_map"]
 
     alias = alias_map[table]
@@ -331,33 +331,33 @@ def build_where_clause(query_plan):
     time_filter = query_plan.get("time_filter")
 
     if time_filter:
-    
+
         date_columns = query_plan.get("date_columns", [])
-    
+
         for col in date_columns:
-    
+
             owner = get_column_owner(
                 col,
                 schema
             )
-    
+
             if not owner:
                 continue
-    
+
             alias = alias_map.get(owner)
-    
+
             date_condition = build_time_filter_condition(
                 time_filter,
                 [f"{alias}.{col}"]
             )
-    
+
             if date_condition:
                 where_parts.append(date_condition)
-    
+
 #    time_filter = query_plan.get("time_filter")
 #
 #    if time_filter:
-#        
+#
 ##        period = time_filter["period"]
 ##        offset = time_filter["offset"]
 #
@@ -369,60 +369,60 @@ def build_where_clause(query_plan):
 #                col,
 #                schema
 #            )
-#        
+#
 #            if not owner:
 #                continue
-#        
+#
 #            alias = alias_map.get(owner)
-#        
+#
 ##            period = time_filter["period"]
 ##            offset = time_filter["offset"]
-#        
+#
 #            date_condition = None
-#            
+#
 ##            if period == "day":
 ##
 ##                if offset == 0:
-##            
+##
 ##                    date_condition = (
 ##                        f"{alias}.{col} = TODAY"
 ##                    )
-##            
+##
 ##                elif offset == -1:
-##            
+##
 ##                    date_condition = (
 ##                        f"{alias}.{col} = TODAY - 1"
 ##                    )
 ##            elif period == "month":
 ##
 ##                if offset == 0:
-##            
+##
 ##                    date_condition = (
 ##                        f"{alias}.{col} >= TODAY - 30"
 ##                    )
-##            
+##
 ##                elif offset == -1:
-##            
+##
 ##                    date_condition = (
 ##                        f"{alias}.{col} >= TODAY - 60 "
 ##                        f"AND {alias}.{col} < TODAY - 30"
-##                    )            
-##            
+##                    )
+##
 ##            elif period == "year":
 ##
 ##                if offset == 0:
-##            
+##
 ##                    date_condition = (
 ##                        f"{alias}.{col} >= TODAY - 365"
 ##                    )
-##            
+##
 ##                elif offset == -1:
-##            
+##
 ##                    date_condition = (
 ##                        f"{alias}.{col} >= TODAY - 730 "
 ##                        f"AND {alias}.{col} < TODAY - 365"
 ##                    )
-##            
+##
 #            date_condition = build_time_filter_condition(
 #                        time_filter,
 #                        [f"{alias}.{col}"]
@@ -430,8 +430,8 @@ def build_where_clause(query_plan):
 #
 #            if date_condition:
 #                where_parts.append(date_condition)
-#            
-#            
+#
+#
     # -------------------------
     # CUSTOM CONDITIONS (future)
     # -------------------------
@@ -456,7 +456,7 @@ def build_where_clause(query_plan):
         return ""
 
     return "WHERE " + " AND ".join(where_parts)
- 
+
 #----------------------------------------------------------
 def build_group_by_clause(query_plan):
 
@@ -502,12 +502,12 @@ def build_order_by_clause(query_plan):
     order_strategy = query_plan["order_strategy"]
 
     time_filter = query_plan.get("time_filter")
-    
+
     if not order_strategy:
         return ""
 
 #    schema = query_plan["schema"]
-#    
+#
 #    alias_map = query_plan["alias_map"]
 
     strategy_type = order_strategy["type"]
@@ -530,11 +530,11 @@ def build_order_by_clause(query_plan):
     # -------------------------
     # LATEST DATE
     # -------------------------
-    
+
     elif strategy_type == "latest_date":
-        
+
         schema = query_plan["schema"]
-    
+
         alias_map = query_plan["alias_map"]
 
 
@@ -543,20 +543,19 @@ def build_order_by_clause(query_plan):
             and time_filter.get("period") == "day"
         ):
             return ""
-    
+
         column = order_strategy["column"]
-    
+
         owner = get_column_owner(column, schema)
-    
+
         alias = alias_map.get(owner)
-    
+
         return (
             f"ORDER BY {alias}.{column} DESC"
         )
 
     return ""
 #-----------------------------------------------------------------------------
-
 def build_limit_clause(query_plan):
 
     limit_strategy = query_plan[
@@ -582,8 +581,16 @@ def build_limit_clause(query_plan):
 
         return f"FIRST {limit_value}"
 
+    elif limit_type == "bottom_n":
+
+        return f"FIRST {limit_value}"
+
+    elif limit_type == "first_n":
+
+        return f"FIRST {limit_value}"
+
     return ""
-#-----------------------------------------------------------------------------    
+#-----------------------------------------------------------------------------
 def build_having_clause(query_plan):
 
     having = query_plan.get("having_condition")
@@ -606,37 +613,37 @@ def build_having_clause(query_plan):
 # GENERATE SQL
 # -------------------------
 def compile_sql(query_plan):
-    
+
    # -------------------------
    # SELECT
    # -------------------------
-   
+
     select_clause = build_select_clause(
                     query_plan
                 )
-    
+
     # -------------------------
     # FROM
     # -------------------------
 
     join_plan = query_plan["join_plan"]
-    
+
     if join_plan:
-    
+
         from_clause = build_join_clause(
                     join_plan,
                     query_plan["alias_map"]
                 )
-    
+
     else:
-    
+
         from_clause = build_from_clause(
             query_plan
         )
    # -------------------------
    # WHERE
    # -------------------------
-   
+
     where_clause = build_where_clause(
                     query_plan
                 )
@@ -644,12 +651,12 @@ def compile_sql(query_plan):
     # -------------------------
     # GROUP BY
     # -------------------------
-    
+
     group_by_clause = build_group_by_clause(
                         query_plan
                     )
 
-    
+
     having_clause = build_having_clause(query_plan)
     # -------------------------
     # ORDER BY
@@ -657,7 +664,7 @@ def compile_sql(query_plan):
     order_by_clause = build_order_by_clause(
                         query_plan
                     )
-    
+
     # -------------------------
     # LIMIT
     # -------------------------
@@ -669,11 +676,11 @@ def compile_sql(query_plan):
 {having_clause}
 {order_by_clause}
 """.strip()
- 
+
     return sql
-#---------------------------------------------------------------------   
+#---------------------------------------------------------------------
 def generate_sql(messages):
-    
+
     completion = client.chat.completions.create(
         model=MODEL_NAME,
         messages=messages,

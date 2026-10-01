@@ -30,9 +30,9 @@ def compile_select_ast(
                 node["column"],
                 schema
             )
-        
+
             alias = alias_map.get(owner)
-        
+
             select_parts.append(
                 f"{node['function']}"
                 f"({alias}.{node['column']}) "
@@ -49,9 +49,9 @@ def compile_select_ast(
                 node["column"],
                 schema
             )
-        
+
             alias = alias_map.get(owner)
-        
+
             select_parts.append(
                 f"COUNT(DISTINCT "
                 f"{alias}.{node['column']}"
@@ -81,43 +81,7 @@ def compile_from_ast(
         f"{base_table} "
         f"{base_alias}"
     )
-    
-#def compile_from_ast(
-#    ast,
-#    alias_map
-#):
-#
-#    base_table = ast["from"]
-#
-#    base_alias = alias_map[base_table]
-#
-#    sql = (
-#        f"FROM "
-#        f"{base_table} "
-#        f"{base_alias}"
-#    )
-#
-#    for join in ast["joins"]:
-#
-#        right_table = join["right_table"]
-#
-#        left_table = join["left_table"]
-#
-#        left_column = join["left_column"]
-#
-#        right_column = join["right_column"]
-#
-#        left_alias = alias_map[left_table]
-#
-#        right_alias = alias_map[right_table]
-#
-#        sql += f"""
-#JOIN {right_table} {right_alias}
-#ON {left_alias}.{left_column}
-#= {right_alias}.{right_column}
-#"""
-#
-#    return sql.strip()
+
 #--------------------------------------------------
 def compile_where_ast(
     ast,
@@ -130,60 +94,60 @@ def compile_where_ast(
             column = node["column"]
 
             period = node["period"]
-            
+
             offset = node["offset"]
-            
+
             owner = get_column_owner(
                 column,
                 schema
             )
-            
+
             alias = alias_map.get(owner)
             date_condition = None
-            
+
             if period == "day":
 
                 if offset == 0:
-            
+
                     date_condition = (
                         f"{alias}.{column} = TODAY"
                     )
-            
+
                 elif offset == -1:
-            
+
                     date_condition = (
                         f"{alias}.{column} = TODAY - 1"
                     )
             elif period == "month":
 
                 if offset == 0:
-            
+
                     date_condition = (
                         f"{alias}.{column} >= TODAY - 30"
                     )
-            
+
                 elif offset == -1:
-            
+
                     date_condition = (
                         f"{alias}.{column} >= TODAY - 60 "
                         f"AND {alias}.{column} < TODAY - 30"
-                    )            
-            
+                    )
+
             elif period == "year":
 
                 if offset == 0:
-            
+
                     date_condition = (
                         f"{alias}.{column} >= TODAY - 365"
                     )
-            
+
                 elif offset == -1:
-            
+
                     date_condition = (
                         f"{alias}.{column} >= TODAY - 730 "
                         f"AND {alias}.{column} < TODAY - 365"
                     )
-            
+
             if date_condition:
 
                 where_parts.append(
@@ -200,27 +164,27 @@ def compile_group_by_ast(
     alias_map
 ):
     group_parts = []
-    
+
     group_columns = ast["group_by"]
-    
+
     if not group_columns:
         return ""
-        
+
     for column in group_columns:
-        
+
             owner = get_column_owner(
                 column,
                 schema
             )
-            
+
             alias = alias_map.get(owner)
             group_parts.append(
                 f"{alias}.{column}"
             )
-    
+
     if not group_parts:
         return ""
-        
+
     group_parts = ",\n  ".join(
         group_parts
     )
@@ -293,6 +257,7 @@ def compile_order_by_ast(
         )
 
         # column حقيقي موجود فى schema
+
         if owner:
 
             alias = alias_map.get(owner)
@@ -313,17 +278,39 @@ def compile_order_by_ast(
         + ",\n  ".join(order_parts)
     )
 #--------------------------------------------------
+
 def compile_limit_ast(ast):
+
     limit_node = ast.get("limit")
 
     if not limit_node:
         return ""
-    
+
     if limit_node["type"] == "top_n":
 
         return (
             f"FIRST {limit_node['count']}"
         )
+
+    elif limit_node["type"] == "bottom_n":
+
+        return (
+            f"FIRST {limit_node['count']}"
+        )
+
+    elif limit_node["type"] == "latest_n":
+
+        return (
+            f"FIRST {limit_node['count']}"
+        )
+
+    elif limit_node["type"] == "first_n":
+
+        return (
+            f"FIRST {limit_node['count']}"
+        )
+
+    return ""
 #--------------------------------------------------
 def compile_join_ast(
     joins,
@@ -360,52 +347,52 @@ def compile_join_ast(
     return "\n".join(sql_parts)
 #--------------------------------------------------
 def compile_sql_ast(ast,schema,alias_map):
-    
+
     select_sql = compile_select_ast(
         ast,
         schema,
         alias_map
     )
-    
+
     from_sql = compile_from_ast(
         ast,
         alias_map
     )
-    
+
     join_clause = compile_join_ast(
         ast["joins"],
         schema,
         alias_map
     )
-    
+
     where_sql = compile_where_ast(
         ast,
         schema,
         alias_map
     )
-    
+
     group_sql = compile_group_by_ast(
         ast,
         schema,
         alias_map
     )
-    
+
     having_sql = compile_having_ast(
         ast,
         schema,
         alias_map
     )
-    
+
     order_sql = compile_order_by_ast(
         ast,
         schema,
         alias_map
     )
-    
+
     limit_sql = compile_limit_ast(
         ast
     )
-    
+
     if limit_sql:
 
         select_sql = select_sql.replace(
@@ -418,7 +405,7 @@ def compile_sql_ast(ast,schema,alias_map):
         select_sql,
         from_sql
     ]
-    
+
     if join_clause:
         sql_parts.append(
             join_clause
@@ -429,24 +416,24 @@ def compile_sql_ast(ast,schema,alias_map):
         sql_parts.append(
             where_sql
         )
-    
+
     if group_sql:
 
         sql_parts.append(
             group_sql
         )
-        
+
     if having_sql:
         sql_parts.append(
             having_sql
         )
-        
+
     if order_sql:
 
         sql_parts.append(
             order_sql
         )
-        
+
     sql = "\n\n".join(
             sql_parts
         )

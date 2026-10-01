@@ -69,20 +69,20 @@ TEST_PRODUCTION_ALIAS_MAP = {
     "prod_desc": "pd"
 }
 #----------------------------------------------------------
-TEST_TAGS = {
-
-    "REPORT": "report",
-    "RAW": "raw",
-
-    "JOIN": "join",
-    "GROUP_BY": "group-by",
-    "HAVING": "having",
-
-    "DISPLAY_COLUMN": "display-column",
-
-    "SALES": "sales",
-    "PRODUCTION": "production"
-}
+#TEST_TAGS = {
+#
+#    "REPORT": "report",
+#    "RAW": "raw",
+#
+#    "JOIN": "join",
+#    "GROUP_BY": "group-by",
+#    "HAVING": "having",
+#
+#    "DISPLAY_COLUMN": "display-column",
+#
+#    "SALES": "sales",
+#    "PRODUCTION": "production"
+#}
 
 
 #-------------------------------------------------------
@@ -115,6 +115,6 @@ TEST_TAGS = {
     "DOMAINS": [
         "sales",
         "production",
-        "inventory"
+        "inventory"    #future
     ]
 }

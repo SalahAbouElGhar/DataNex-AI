@@ -29,38 +29,38 @@ def build_select_ast(query_plan):
                 "type": "column",
                 "column": measure
             })
-            
-        
+
+
 
     elif intent in ["report", "kpi"]:
 
         for column in dimensions:
-    
+
             select_nodes.append({
                 "type": "column",
                 "column": column
             })
-    
+
         # -------------------------
         # COUNT
         # -------------------------
-    
+
         if (
             query_plan["aggregation_function"] == "COUNT"
             and query_plan["count_target"]
         ):
-    
+
             count_target = query_plan["count_target"]
-    
+
             if count_target["type"] == "rows":
-    
+
                 select_nodes.append({
                     "type": "count_rows",
                     "alias": "row_count"
                 })
-    
+
             elif count_target["type"] == "distinct":
-    
+
                 select_nodes.append({
                     "type": "count_distinct",
                     "column": count_target["column"],
@@ -70,15 +70,15 @@ def build_select_ast(query_plan):
                         query_plan
                     )
                 })
-    
+
             return select_nodes
-    
+
         # -------------------------
         # SUM / AVG / MAX / MIN
         # -------------------------
-    
+
         for measure in measures:
-    
+
             select_nodes.append({
                 "type": "aggregation",
                 "function": query_plan["aggregation_function"],
@@ -112,32 +112,32 @@ def build_order_by_ast(query_plan):
     )
 
     if not order_strategy:
-        
+
         if query_plan["intent"] == "raw":
 
             dimensions = query_plan.get(
                 "dimensions",
                 []
             )
-        
+
             date_columns = query_plan.get(
                 "date_columns",
                 []
             )
-        
+
             for column in dimensions:
-        
+
                 if column in date_columns:
                     continue
-        
+
                 order_nodes.append({
                     "column": column,
                     "direction": "ASC"
                 })
-        
+
         return order_nodes
     strategy_type = order_strategy["type"]
-    
+
     # -------------------------
     # MEASURE DESC
     # -------------------------
@@ -167,6 +167,30 @@ def build_order_by_ast(query_plan):
             "column": order_strategy["column"],
             "direction": "DESC"
         })
+
+    elif strategy_type == "earliest_date":
+
+        order_nodes.append({
+            "column": order_strategy["column"],
+            "direction": "ASC"
+        })
+
+
+    elif strategy_type == "measure_asc":
+
+        measure = order_strategy["measure"]
+
+        alias_order = build_aggregation_alias(
+            query_plan["aggregation_function"],
+            measure,
+            query_plan
+        )
+
+        order_nodes.append({
+            "column": alias_order,
+            "direction": "ASC"
+        })
+
 
     return order_nodes
 #----------------------------------------------------
@@ -210,49 +234,46 @@ def build_ast(query_plan):
     }
 
     ast["select"] = build_select_ast(query_plan)
-    
+
     ast["group_by"] = build_group_by_ast(query_plan)
-    
+
     ast["having"] = []
 
     having_condition = query_plan.get(
         "having_condition"
     )
-    
+
     if having_condition:
-    
+
         ast["having"].append(
             having_condition
         )
-    
+
     ast["order_by"] = build_order_by_ast(query_plan)
-    
+
     ast["limit"] = build_limit_ast(query_plan)
-    
+
     join_plan = query_plan.get("join_plan")
-    
-#    ast["from"] = join_plan["base_table"]
-#
-#    ast["joins"] = join_plan["joins"]
+
 
     if join_plan:
-    
+
         ast["from"] = join_plan["base_table"]
         ast["joins"] = join_plan.get("joins",[])
 
-    
+
     else:
-    
+
         required_tables = query_plan["required_tables"]
 
         if required_tables:
-    
+
             ast["from"] = required_tables[0]
-            
+
     time_filter = query_plan.get("time_filter")
 
     if time_filter:
-    
+
         ast["where"].append({
             "type": time_filter["type"],
             "column": query_plan["date_columns"][0],

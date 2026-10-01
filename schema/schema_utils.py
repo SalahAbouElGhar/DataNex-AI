@@ -1,6 +1,5 @@
 # schema_utils.py
 from core.config import (
-    BUSINESS_TERMS,
     MEASURE_KEYWORDS,
     DATE_COLUMN_KEYWORDS,
     LIMIT_PATTERNS,
@@ -17,7 +16,6 @@ def extract_all_columns(schema):
         all_columns.extend(cols)
 
     return list(set(all_columns))
-
 #-------------------------------------------------------
 def get_column_owner(column,schema):
 
@@ -61,22 +59,22 @@ def build_aggregation_alias(
             count_target = query_plan.get(
                 "count_target"
             )
-    
+
     if count_target:
 
         if count_target["type"] == "rows":
-    
+
             return "row_count"
-    
+
         if count_target["type"] == "distinct":
-    
+
             root = (
                 count_target["column"]
                 .replace("_id", "")
             )
-    
+
             return f"{root}_count"
-    
+
     if not function_name:
         return measure
 
@@ -179,47 +177,80 @@ def extract_display_columns(
         for col in all_columns
         if is_display_column(col)
     ]
+
 #--------------------------------------------------
-def build_display_targets(
-        schema,
-        BUSINESS_TERMS
-):
+def build_semantic_targets(domain_config):
 
-    all_columns = extract_all_columns(
-        schema
-    )
+    return domain_config.get(
+        "semantic_entities",
+        {}
+    ).copy()
+#--------------------------------------------------
 
-    display_columns = (
-        extract_display_columns(
-            all_columns
+def build_display_targets(domain_config):
+
+    return domain_config.get(
+        "display_entities",
+        {}
+    ).copy()
+#--------------------------------------------------
+def build_alias_map(required_tables):
+
+    alias_map = {}
+
+    used_aliases = set()
+
+    for table in required_tables:
+
+        # -------------------------
+        # DEFAULT ALIAS
+        # -------------------------
+
+        parts = table.split("_")
+
+        alias = "".join(
+            part[0]
+            for part in parts
+        ).lower()
+
+        # -------------------------
+        # HANDLE DUPLICATES
+        # -------------------------
+
+        counter = 1
+
+        original = alias
+
+        while alias in used_aliases:
+
+            alias = f"{original}{counter}"
+
+            counter += 1
+
+        alias_map[table] = alias
+
+        used_aliases.add(alias)
+
+    return alias_map
+#-------------------------------------------
+def extract_measure_columns(columns):
+
+    return [
+        col
+        for col in columns
+        if any(
+            keyword in col.lower()
+            for keyword in MEASURE_KEYWORDS
         )
-    )
+    ]
+#------------------------------------------------
+def extract_date_columns(columns):
 
-    display_targets = {}
-
-    for col in display_columns:
-
-        root = strip_display_suffix(
-            col
+    return [
+        col
+        for col in columns
+        if any(
+            keyword in col.lower()
+            for keyword in DATE_COLUMN_KEYWORDS
         )
-
-        for business_term, aliases in BUSINESS_TERMS.items():
-
-            for alias in aliases:
-
-                if (
-                    root in alias
-                    or
-                    alias in root
-                ):
-
-                    display_targets[
-                        business_term
-                    ] = col
-
-                    break
-
-    return display_targets
-#--------------------------------------------------
-
-#--------------------------------------------------
+    ]

@@ -1,8 +1,7 @@
 import re
 from core.config import (
-#    BUSINESS_KEYWORDS,
     BUSINESS_TERMS,
-#    BUSINESS_TABLES,
+    AGGREGATION_KEYWORDS,
     MEASURE_KEYWORDS,
     DATE_COLUMN_KEYWORDS,
     LIMIT_PATTERNS,
@@ -12,17 +11,38 @@ from core.config import (
     DOMAINS
 )
 from schema.schema_utils import (
-    extract_all_columns,
-    extract_id_columns,
     get_columns_for_tables,
     is_relationship_column,
     strip_relationship_suffix,
     extract_relationship_columns,
-    
-    build_display_targets
+
+    build_alias_map,
+    build_semantic_targets,
+    build_display_targets,
+    extract_measure_columns,
+    extract_date_columns
+
+)
+from reasoning.business_reasoning import(build_business_decision)
+from context.reasoning_context import (
+    prepare_reasoning_context
 )
 
-import traceback
+from pprint import pprint
+
+# ==========================================================
+# Debug Flags
+# ==========================================================
+DEBUG_REASONING_CONTEXT = False
+
+DEBUG_BUSINESS_REASONING = True #False
+
+DEBUG_QUERY_PLANNER = False
+
+DEBUG_AST = False
+
+DEBUG_SQL_COMPILER = False
+
 # ===============================
 # TEXT HELPERS
 # ===============================
@@ -33,15 +53,15 @@ def extract_words(text):
 #---------------------------------------------------
 
 def extract_grouping_terms(prompt):
-    
+
     match = re.search(
             r"\bby\b(.+)",
             prompt
         )
-     
+
     if match:
         return match.group(1).strip()
-    
+
     return  ""
 
 #--------------------------------------------------------
@@ -72,23 +92,21 @@ def parse_multi_table_schema(schema_text: str):
         # MATCH TABLE STRUCTURE
         # -------------------------
 
-#        match = re.match(r'(\w+)\s+columns\s+(.+)',block)
-
         match = re.match(r'(\w+)\s+columns\s*(.*)',block,re.DOTALL)
-        
+
         if not match:
             continue
 
         table_name = match.group(1)
 
         columns_text = match.group(2)
-        
+
         columns = []
 
         for col in re.split(r'[\n,]+',columns_text):
-        
+
             col = col.strip()
-        
+
             if col:
                 columns.append(col)
 
@@ -158,13 +176,13 @@ def detect_domain(prompt):
     ):
 
         domain = detector(prompt)
-  
+
         if domain:
             return domain
 
     return "generic"
-    
-                                                                    
+
+
 # ===============================
 # TABLE DETECTION
 # ===============================
@@ -226,87 +244,33 @@ def resolve_tables_from_entities(
 #--------------------------------------------------
 def resolve_required_tables(prompt,schema):
 
-# 1. Column matching
- 
-    required_tables = detect_tables_from_columns(prompt,schema)
-    
-    if required_tables:
-        return sorted(required_tables)
+    for detector in (
+        detect_tables_from_columns,
+        resolve_tables_from_entities,
+        ):
 
-# 2. Entity matching
+            result = detector(prompt, schema)
 
-    required_tables = resolve_tables_from_entities(prompt,schema )
-    
-    if required_tables:
-        return sorted(required_tables)
-
+            if result:
+                return sorted(result)
 # 3. Fallback
 
     return get_default_table(schema)
-#-----------------------------------------------   
-# In the futcher     
-#    for detector in (
-#    detect_tables_from_columns,
-#    resolve_tables_from_entities,
-#    ):
-#
-#        result = detector(prompt, schema)
-#
-#        if result:
-#            return sorted(result)
-#    
-#    return get_default_table(schema)
-#------------------------------------------
-#OR
-#    TABLE_DETECTORS = (
-#    detect_tables_from_columns,
-#    resolve_tables_from_entities,
-#    )
-#    for detector in TABLE_DETECTORS:
-#
-#        result = detector(prompt, schema)
-#    
-#        if result:
-#            return sorted(result)
-#    
-#    return get_default_table(schema)
-#---------------------------------------------------   
+#-----------------------------------------------
+
 def get_default_table(schema):
-    
+
 #    return [list(schema["tables"])[0]]
 
-    return [next(iter(schema["tables"]))]   
-    
+    return [next(iter(schema["tables"]))]
 
-    
+
+
 
 # ===============================
 # COLUMN ANALYSIS
 # ===============================
 
-def extract_measure_columns(columns):
-
-    return [
-        col
-        for col in columns
-        if any(
-            keyword in col.lower()
-            for keyword in MEASURE_KEYWORDS
-        )
-    ]
-#-------------------------------------------------------
-
-def extract_date_columns(columns):
-
-    return [
-        col
-        for col in columns
-        if any(
-            keyword in col.lower()
-            for keyword in DATE_COLUMN_KEYWORDS
-        )
-    ]
-#--------------------------------------------------------
 def extract_candidate_dimensions(
     columns: list,
     measures: list,
@@ -325,9 +289,9 @@ def extract_candidate_dimensions(
 
     ]
 
-    
+
     # REMOVE DUPLICATES
- 
+
     dimensions = list(dict.fromkeys(dimensions))
 
     return dimensions
@@ -360,21 +324,21 @@ def calculate_relationship_score(
     # RULE 1
     if l == r:
         score += 50
-        
+
     left_is_rel = is_relationship_column(l)
     right_is_rel = is_relationship_column(r)
 
     # RULE 2
     if left_is_rel and right_is_rel:
-        
+
         score += 30
-    
+
     # RULE 3
     if (left_is_rel and right_is_rel
         and strip_relationship_suffix(l) == strip_relationship_suffix(r)):
-            
+
         score += 40
- 
+
     return score
 #--------------------------------------------------
 def detect_relationships(schema):
@@ -410,21 +374,21 @@ def detect_relationships(schema):
             # -------------------------
 
             for lcol in left_columns:
-            
+
                 if not is_relationship_candidate(lcol):
                     continue
-            
+
                 for rcol in right_columns:
-            
+
                     if not is_relationship_candidate(rcol):
                         continue
 
                     score = calculate_relationship_score( lcol, rcol)
-    
+
                     # -------------------------
                     # ACCEPT RELATIONSHIP
                     # -------------------------
-    
+
                     if score >= 50:
 
                         already_exists = any(
@@ -438,13 +402,13 @@ def detect_relationships(schema):
                                 and
                                 r["right_column"] == lcol
                             )
-                        
+
                             for r in relationships
                         )
-                        
+
                         if already_exists:
                             continue
-    
+
                         relationships.append({
                             "left_table": left_table,
                             "right_table": right_table,
@@ -482,131 +446,85 @@ def semantic_match(term_aliases, column):
     return False
 
 # ===============================
-# SEMANTIC MAPPING
-# ===============================
-def build_semantic_targets(schema, BUSINESS_TERMS):
-
-    all_columns = extract_all_columns(schema)
-    
-    id_columns = extract_id_columns(all_columns)
-
-    # -----------------------------
-    # ROOT MAPPING
-    # -----------------------------
-    count_targets = {}
-
-    for col in id_columns:
-        
-        root = strip_relationship_suffix(col)
-        
-        count_targets[root] = col
-
-    # -----------------------------
-    # SEMANTIC MATCHING (FIXED)
-    # -----------------------------
-    semantic_targets = {}
-
-    for root, column in count_targets.items():
-
-        for business_term, aliases in BUSINESS_TERMS.items():
-
-            for alias in aliases:
-
-                if (
-                    root in alias
-                    or alias in root
-                ):
-                    semantic_targets[business_term] = column
-                    break
-
-    return semantic_targets
-
-# ===============================
 # QUERY CONTEXT
 # ===============================
+# Legacy implementation still in active use.
+def prepare_query_context(prompt,schema,domain_config):
 
-def prepare_query_context(prompt,schema):
-    
-    
-    try:
-        required_tables = resolve_required_tables(prompt,schema)
-    
-        relationships = detect_relationships(schema)
 
-        #---------------------------------------
-        join_plan = None
-    
-        if len(required_tables) > 1:
+#    try:
+    # -------------------------
+    # DATABASE PREPARATION
+    # -------------------------
 
-            join_plan = build_join_plan(
-                required_tables,
-                relationships
-            )
-            
-            
-        columns = get_columns_for_tables(
-                    schema,
-                    required_tables
-                )
-                
-        display_targets = (
-                build_display_targets(
-                    schema,
-                    BUSINESS_TERMS
-                )
-            )
-        
-        alias_map = build_alias_map(
-                        required_tables
-                    )
-        
-        
-            
-        semantic_targets = build_semantic_targets(schema, BUSINESS_TERMS)
+    required_tables = resolve_required_tables(prompt, schema)
 
-        return {
-            "required_tables": required_tables,
-            "relationships": relationships,
-            "join_plan": join_plan,
-            "columns": columns,
-            "alias_map": alias_map,
-            "semantic_targets": semantic_targets,
-            "display_targets": display_targets
-        }
-    except Exception as e:
-        traceback.print_exc()
+    relationships = detect_relationships(schema)
+
+    join_plan = None
+
+    if len(required_tables) > 1:
+        join_plan = build_join_plan(
+            required_tables,
+            relationships
+        )
+
+    columns = get_columns_for_tables(
+        schema,
+        required_tables
+    )
+
+    alias_map = build_alias_map(
+        required_tables
+    )
+
+    # -------------------------
+    # KNOWLEDGE PREPARATION
+    # -------------------------
+
+    semantic_targets = build_semantic_targets(
+        domain_config
+    )
+
+    display_targets = build_display_targets(
+        domain_config
+    )
+
+    return {
+
+        # Database
+
+        "required_tables": required_tables,
+        "relationships": relationships,
+        "join_plan": join_plan,
+        "columns": columns,
+        "alias_map": alias_map,
+
+        # Knowledge
+
+        "semantic_targets": semantic_targets,
+        "display_targets": display_targets
+    }
+
 #---------------------------------------------------------------------------
 # ===============================
 # REASONING
 # ===============================
 
-#for function, keywords in AGGREGATION_KEYWORDS.items():
-#
-#    if any(keyword in prompt for keyword in keywords):
-#
-#        return function
 def resolve_aggregation_function(prompt):
 
     prompt = prompt.lower()
 
-    if "total" in prompt or "sum" in prompt:
-        return "SUM"
+    for function, keywords in AGGREGATION_KEYWORDS.items():
 
-    if "average" in prompt or "avg" in prompt:
-        return "AVG"
+        if any(keyword in prompt for keyword in keywords):
 
-    if "maximum" in prompt or "max" in prompt or "highest" in prompt:
-        return "MAX"
-
-    if "minimum" in prompt or "min" in prompt or "lowest" in prompt:
-        return "MIN"
-
-    if "count" in prompt or "number of" in prompt or "how many" in prompt:
-        return "COUNT"
+            return function
 
     return None
-    
-#-------------------------------------------------------------- 
+
+# -------------------------------------------------------------
+# -------------------------------------------------------------
 
 def resolve_grouping_dimensions(
         prompt,
@@ -643,7 +561,7 @@ def resolve_grouping_dimensions(
 
                         dimensions.append(
                             semantic_targets[business_term]
-                        )                                                                    
+                        )
 
                 else:
 
@@ -658,13 +576,16 @@ def resolve_grouping_dimensions(
 
                 break
 
-    return dimensions 
-    
-#-------------------------------------------------------------- 
+    return dimensions
 
+#--------------------------------------------------------------
 def resolve_ranking_strategy(prompt):
 
     prompt = prompt.lower()
+
+    # -------------------------
+    # HIGHEST
+    # -------------------------
 
     if "highest" in prompt:
 
@@ -672,6 +593,10 @@ def resolve_ranking_strategy(prompt):
             "type": "top_n",
             "limit": 1
         }
+
+    # -------------------------
+    # TOP N
+    # -------------------------
 
     if "top" in prompt:
 
@@ -698,10 +623,138 @@ def resolve_ranking_strategy(prompt):
                     "limit": 10
                 }
 
+    # -------------------------
+    # BOTTOM N
+    # -------------------------
+
+    if "bottom" in prompt:
+
+        words = prompt.split()
+
+        for i, word in enumerate(words):
+
+            if word == "bottom":
+
+                if (
+                    i + 1 < len(words)
+                    and words[i + 1].isdigit()
+                ):
+
+                    return {
+                        "type": "bottom_n",
+                        "limit": int(
+                            words[i + 1]
+                        )
+                    }
+
+                return {
+                    "type": "bottom_n",
+                    "limit": 10
+                }
+
+    # -------------------------
+    # LATEST N
+    # -------------------------
+
+    if "latest" in prompt:
+
+        words = prompt.split()
+
+        for i, word in enumerate(words):
+
+            if word == "latest":
+
+                if (
+                    i + 1 < len(words)
+                    and words[i + 1].isdigit()
+                ):
+
+                    return {
+                        "type": "latest_n",
+                        "limit": int(
+                            words[i + 1]
+                        )
+                    }
+
+                return {
+                    "type": "latest_n",
+                    "limit": 10
+                }
+
+    # -------------------------
+    # FIRST N
+    # -------------------------
+
+    if "first" in prompt:
+
+        words = prompt.split()
+
+        for i, word in enumerate(words):
+
+            if word == "first":
+
+                if (
+                    i + 1 < len(words)
+                    and words[i + 1].isdigit()
+                ):
+
+                    return {
+                        "type": "first_n",
+                        "limit": int(
+                            words[i + 1]
+                        )
+                    }
+
+                return {
+                    "type": "first_n",
+                    "limit": 10
+                }
+
     return None
-    
 
-
+#def detect_intent(
+#    prompt,
+#    aggregation_function,
+#    group_dimensions,
+#    ranking_strategy
+#):
+#
+#    prompt_lower = prompt.lower()
+#
+#    # -------------------
+#    # REPORT
+#    # -------------------
+#
+#    if (
+#        group_dimensions
+#        or "report" in prompt_lower
+#        or "by" in prompt_lower
+#    ):
+#        intent = "report"
+#
+#    # -------------------
+#    # KPI
+#    # -------------------
+#
+#    elif aggregation_function:
+#        intent = "kpi"
+#
+#    # -------------------
+#    # RAW
+#    # -------------------
+#
+#    else:
+#        intent = "raw"
+#
+#    # -------------------
+#    # RANKING
+#    # -------------------
+#
+#    if ranking_strategy and intent == "raw":
+#        intent = "report"
+#
+#    return intent
+#
 def detect_intent(
     prompt,
     aggregation_function,
@@ -737,18 +790,27 @@ def detect_intent(
         intent = "raw"
 
     # -------------------
-    # RANKING
+    # RANKING / SELECTION
     # -------------------
 
     if ranking_strategy and intent == "raw":
-        intent = "report"
+
+        ranking_type = ranking_strategy.get(
+            "type"
+        )
+
+        if ranking_type in (
+            "top_n",
+            "bottom_n"
+        ):
+            intent = "report"
 
     return intent
 
 # ----- Dimensions -----
 
 def resolve_requested_dimensions(prompt: str,columns: list,date_columns):
-    
+
     required_dimensions = []
 
     # -------------------------
@@ -759,28 +821,28 @@ def resolve_requested_dimensions(prompt: str,columns: list,date_columns):
         extract_grouping_terms(prompt.lower())
         or ""
     )
-    
+
     if not group_part:
         return []
-    
+
 
     for keyword, aliases in BUSINESS_TERMS.items():
 
         if keyword in group_part:
 
-    
+
             for col in columns:
-    
+
                 if col in date_columns:
                     continue
                 if semantic_match(
                     aliases,
                     col
                 ):
-    
+
                     if col not in required_dimensions:
                         required_dimensions.append(col)
-                
+
     return required_dimensions
 
 #-----------------------------------------------------------------
@@ -802,17 +864,17 @@ def resolve_count_target(prompt, semantic_targets):
     for business_term, aliases in BUSINESS_TERMS.items():
 
         for alias in aliases:
-    
+
             if alias in prompt:
-                
-    
+
+
                 return {
                     "type": "distinct",
                     "column": semantic_targets.get(business_term)
                 }
 
     return None
-    
+
 # ----- Time -----
 
 def resolve_time_filter(prompt: str):
@@ -858,33 +920,33 @@ def resolve_time_filter(prompt: str):
     # -------------------------
     # YESTERDAY
     # -------------------------
-    
+
     if "yesterday" in prompt:
-    
+
         return {
             "type": "relative_period",
             "period": "day",
             "offset": -1
         }
-    
+
     # -------------------------
     # LAST MONTH
     # -------------------------
-    
+
     if "last month" in prompt:
-    
+
         return {
             "type": "relative_period",
             "period": "month",
             "offset": -1
         }
-    
+
     # -------------------------
     # LAST YEAR
     # -------------------------
-    
+
     if "last year" in prompt:
-    
+
         return {
             "type": "relative_period",
             "period": "year",
@@ -892,45 +954,6 @@ def resolve_time_filter(prompt: str):
         }
     return None
 
-# ----- Order -----
-
-def resolve_order_strategy(
-    intent,
-    measures,
-    date_columns,
-    time_filter
-):
-
-    # -------------------------
-    # REPORT
-    # -------------------------
-
-    if intent == "report" and measures:
-
-        return {
-            "type": "measure_desc",
-            "measure": measures[0]
-        }
-
-    # -------------------------
-    # RAW
-    # -------------------------
-    if (
-        intent == "raw"
-        and date_columns
-        and not (
-            time_filter
-            and time_filter.get("period") == "day"
-        )
-    ):
-        return {
-            "type": "latest_date",
-            "column": date_columns[0]
-            
-        }
-
-    return None
-    
 # ----- Limit -----
 
 def resolve_limit_strategy(prompt: str):
@@ -952,7 +975,7 @@ def resolve_limit_strategy(prompt: str):
             }
 
     return None
-    
+
 
 #-------------------------------------------------------------------
 
@@ -1016,9 +1039,9 @@ def resolve_having_condition(
     # by the Smart Measure Filter engine.
     if aggregation_function in ("MAX", "MIN"):
         return None
-    
+
     function = aggregation_function
-    
+
     # Implicit aggregation
     if not function and measures:
         function = "SUM"
@@ -1049,18 +1072,40 @@ def resolve_final_dimensions(
     intent
 ):
 
+#    if ranking_strategy:
+#
+#        ranking_dimensions = resolve_ranking_dimensions(
+#            prompt,
+#            columns,
+#            date_columns
+#        )
+#
+#        if ranking_dimensions:
+#            return ranking_dimensions
+#
+#        return []
+
     if ranking_strategy:
 
-        ranking_dimensions = resolve_ranking_dimensions(
-            prompt,
-            columns,
-            date_columns
+        ranking_type = ranking_strategy.get(
+            "type"
         )
 
-        if ranking_dimensions:
-            return ranking_dimensions
+        if ranking_type in (
+            "top_n",
+            "bottom_n"
+        ):
 
-        return []
+            ranking_dimensions = resolve_ranking_dimensions(
+                prompt,
+                columns,
+                date_columns
+            )
+
+            if ranking_dimensions:
+                return ranking_dimensions
+
+            return []
 
     if has_aggregation:
 
@@ -1090,52 +1135,8 @@ def resolve_final_dimensions(
         columns,
         measures,
         date_columns
-    )  
+    )
 
-# ===============================
-# SQL HELPERS
-# ===============================
-
-def build_alias_map(required_tables):
-
-    alias_map = {}
-
-    used_aliases = set()
-
-    for table in required_tables:
-
-        # -------------------------
-        # DEFAULT ALIAS
-        # -------------------------
-
-        parts = table.split("_")
-
-        alias = "".join(
-            part[0]
-            for part in parts
-        ).lower()
-
-        # -------------------------
-        # HANDLE DUPLICATES
-        # -------------------------
-
-        counter = 1
-
-        original = alias
-
-        while alias in used_aliases:
-
-            alias = f"{original}{counter}"
-
-            counter += 1
-
-        alias_map[table] = alias
-
-        used_aliases.add(alias)
-
-    return alias_map
-
-     
 # ===============================
 # QUERY PLANNING
 # ===============================
@@ -1147,56 +1148,56 @@ def build_join_plan(
     # -------------------------
     # SINGLE TABLE
     # -------------------------
-    
+
     if len(required_tables) <= 1:
 
         return {
             "base_table": required_tables[0],
             "joins": []
         }
-    
+
     # -------------------------
     # BASE TABLE
     # -------------------------
-    
+
     base_table = None
 
     for relationship in relationships:
-    
+
         if relationship["left_table"] in required_tables:
-    
+
             base_table = relationship["left_table"]
             break
 
     joins = []
 
     for relationship in relationships:
-    
+
         left_table = relationship["left_table"]
         right_table = relationship["right_table"]
-    
+
         if (
             left_table not in required_tables
             or
             right_table not in required_tables
         ):
             continue
-    
+
         joins.append({
-    
+
             "join_type": "INNER",
-    
+
             "left_table": left_table,
             "right_table": right_table,
-    
+
             "left_column":
                 relationship["left_column"],
-    
+
             "right_column":
                 relationship["right_column"]
-    
+
         })
-    
+
     # -------------------------
     # FINAL PLAN
     # -------------------------
@@ -1208,13 +1209,13 @@ def build_join_plan(
         "joins": joins
 
     }
-    
+
 #---------------------------------------------------------
 # =====================================================
 # MAIN QUERY PLANNER
 # =====================================================
 def build_query_plan(prompt: str, schema: dict):
- 
+
     """
     Build the complete query plan.
 
@@ -1239,42 +1240,74 @@ def build_query_plan(prompt: str, schema: dict):
     # return plan
 
     prompt_lower = prompt.lower()
-    try:
-        context = prepare_query_context(prompt,schema)
-    except Exception as e:
-        traceback.print_exc()
-    
+
+    # -------------------------
+    # DOMAIN
+    # -------------------------
+
+    domain_name = detect_domain(prompt)
+
+    domain_config = DOMAINS[domain_name]
+
+    # -------------------------
+    # CONTEXT
+    # -------------------------
+
+    context = prepare_query_context(prompt,schema,domain_config)
+
     required_tables = context["required_tables"]
+
     relationships = context["relationships"]
+
     join_plan = context["join_plan"]
+
     columns = context["columns"]
+
     alias_map = context["alias_map"]
+
     semantic_targets = context["semantic_targets"]
-    
+
     display_targets = (context["display_targets"])
-    
-    aggregation_function = resolve_aggregation_function(prompt)
-    
-    count_target = None
-    
+
+    # -------------------------
+    # PROMPT PREPARATION
+    # -------------------------
+
     clean_prompt = prompt.lower()
 
     clean_prompt = clean_prompt.split("\n")[0]
-    
+
     if ":" in clean_prompt:
         clean_prompt = clean_prompt.split(":")[-1].strip()
-    
+
+
+    # -------------------------
+    # AGGREGATION
+    # -------------------------
+
+    aggregation_function = resolve_aggregation_function(prompt)
+
+    # -------------------------
+    # PROMPT GROUPING
+    # -------------------------
+
     count_part = clean_prompt
+
     group_part = ""
-    
+
     if " by " in clean_prompt:
-    
+
         parts = clean_prompt.split(" by ", 1)
-    
+
         count_part = parts[0]
-    
+
         group_part = parts[1]
-    
+
+    # -------------------------
+    # COUNT TARGET
+    # -------------------------
+
+    count_target = None
 
     if aggregation_function and aggregation_function.lower() == "count":
         count_target = resolve_count_target(
@@ -1282,8 +1315,12 @@ def build_query_plan(prompt: str, schema: dict):
             semantic_targets
         )
 
+    # -------------------------
+    # GROUP DIMENSIONS
+    # -------------------------
 
     group_source = group_part if group_part else clean_prompt
+
 
     group_dimensions = resolve_grouping_dimensions(
         group_source,
@@ -1292,50 +1329,85 @@ def build_query_plan(prompt: str, schema: dict):
         BUSINESS_TERMS
     )
 
+    # -------------------------
+    # RANKING
+    # -------------------------
+
     ranking_strategy = resolve_ranking_strategy(prompt)
-   
+
     # -------------------
     # INTENT
     # -------------------
-    
+
     intent = detect_intent(
             prompt,
             aggregation_function,
             group_dimensions,
             ranking_strategy
         )
-    
+
+    # -------------------------
+    # DEFAULT AGGREGATION
+    # -------------------------
+
     if intent == "report" and not aggregation_function:
         aggregation_function = "SUM"
-    
+
+#    if ranking_strategy and not aggregation_function:
+#        aggregation_function = "SUM"
 
     # -------------------
     # TIME FILTER
     # -------------------
 
     time_filter = resolve_time_filter(prompt)
-    
+
 
     # -------------------------
     # SAFE RAW POLICY
     # -------------------------
-    
-    if intent == "raw" and not time_filter:
-    
+
+#    if intent == "raw" and not time_filter:
+#
+#        time_filter = {
+#            "type": "relative_period",
+#            "period": "day",
+#            "offset": 0
+#        }
+
+    if (
+        intent == "raw"
+        and not time_filter
+        and not (
+            ranking_strategy
+            and ranking_strategy.get("type") in (
+                "latest_n",
+                "first_n"
+            )
+        )
+    ):
         time_filter = {
             "type": "relative_period",
             "period": "day",
             "offset": 0
         }
-    
+
+    # -------------------------
+    # DATE COLUMNS
+    # -------------------------
+
     date_columns = extract_date_columns(columns)
-    
+
     # -------------------
     # MEASURES
     # -------------------
-    
+
     measures = extract_measure_columns(columns)
-    
+
+    # -------------------------
+    # AGGREGATION CONTEXT
+    # -------------------------
+
     has_aggregation = (
         intent in ["report", "kpi"]
         and len(measures) > 0
@@ -1344,9 +1416,7 @@ def build_query_plan(prompt: str, schema: dict):
     # -------------------
     # DIMENSIONS
     # -------------------
-    if ranking_strategy and not aggregation_function:
-        aggregation_function = "SUM"
-    
+
 #    try:
 
     dimensions = resolve_final_dimensions(
@@ -1359,34 +1429,116 @@ def build_query_plan(prompt: str, schema: dict):
                 group_dimensions,
                 intent
             )
-#    except Exception as e:
-#        traceback.print_exc()
-        
 
-    order_strategy = resolve_order_strategy(
-                        intent,
-                        measures,
-                        date_columns,
-                        time_filter
-                    )
+    # -------------------------
+    # BUSINESS REASONING
+    # -------------------------
 
-    limit_strategy = resolve_limit_strategy(
-                        prompt
-                    )
-                    
-    if ranking_strategy and not limit_strategy:
-        
-        limit_strategy = ranking_strategy
-    
+    reasoning_context = prepare_reasoning_context(
+        prompt,
+        schema,
+        domain_config,
+        required_tables,
+        relationships,
+        aggregation_function,
+        group_dimensions,
+        time_filter,
+        ranking_strategy,
+        intent
+    )
 
+    decision = build_business_decision(
+        reasoning_context
+    )
+
+    business_ordering = decision.get("ordering")
+    business_ranking = decision.get("ranking")
+
+    order_strategy = None
+
+    # -------------------------
+    # BUSINESS ORDERING
+    # -------------------------
+
+    if business_ordering:
+
+        if business_ordering.get("type") == "measure_desc":
+
+            if measures:
+                order_strategy = {
+                    "type": "measure_desc",
+                    "measure": measures[0]
+                }
+
+        elif business_ordering.get("type") == "latest":
+
+            if date_columns:
+                order_strategy = {
+                    "type": "latest_date",
+                    "column": date_columns[0]
+                }
+
+
+    # -------------------------
+    # RANKING ORDER
+    # -------------------------
+
+    if business_ranking and measures:
+
+        ranking_type = business_ranking.get("type")
+
+        if ranking_type == "top_n":
+
+            order_strategy = {
+                "type": "measure_desc",
+                "measure": measures[0]
+            }
+
+        elif ranking_type == "bottom_n":
+
+            order_strategy = {
+                "type": "measure_asc",
+                "measure": measures[0]
+            }
+
+        elif ranking_type == "latest_n":
+
+            if date_columns:
+
+                order_strategy = {
+                    "type": "latest_date",
+                    "column": date_columns[0]
+                }
+
+        elif ranking_type == "first_n":
+
+            if date_columns:
+
+                order_strategy = {
+                    "type": "earliest_date",
+                    "column": date_columns[0]
+                }
+
+
+    # -------------------------
+    # LIMIT
+    # -------------------------
+    if business_ranking:
+        limit_strategy = business_ranking
+    else:
+        limit_strategy = resolve_limit_strategy(prompt)
+
+    # -------------------------
+    # RAW OUTPUT POLICY
+    # -------------------------
     if intent == "raw":
 
         for date_col in date_columns:
-    
+
             if date_col not in dimensions:
                 dimensions.append(date_col)
     # -------------------
-    # TABLE
+    # HAVING
     # -------------------
 
     having_condition = resolve_having_condition(
@@ -1394,28 +1546,90 @@ def build_query_plan(prompt: str, schema: dict):
             measures,
             aggregation_function
         )
+
+    # --------------------------------------------------
+    # Temporary Business Reasoning Test
+    # --------------------------------------------------
+
+    if DEBUG_BUSINESS_REASONING:
+
+        print("Reasoning facts")
+        print("=" * 60)
+
+        pprint(
+            reasoning_context["reasoning_facts"]
+        )
+
+        print("\n" + "=" * 60)
+        print("Business Decision")
+        print("=" * 60)
+
+        pprint(
+            decision
+        )
+    # --------------------------------------------------
+    # End Temporary Business Reasoning Test
+    # --------------------------------------------------
+
     # -------------------
     # RETURN PLAN
     # -------------------
-   
-    return {
-        "intent": intent,
-        "measures": measures,
-        "dimensions": dimensions,
-        "date_columns": date_columns,
-        "time_filter": time_filter,
-        "has_aggregation": has_aggregation,
-        "order_strategy": order_strategy ,
-        "limit_strategy": limit_strategy,
-        "required_tables": required_tables,
-        "relationships": relationships,
-        "join_plan":join_plan,
-        "alias_map": alias_map,
-        "schema": schema,
-        "aggregation_function": aggregation_function,
-        "count_target": count_target,
-        "group_dimensions": group_dimensions,
-        "having_condition":having_condition
-        
-    }
 
+    return {
+
+    # Intent
+
+    "intent": intent,
+
+    # Query Structure
+
+    "aggregation_function": aggregation_function,
+
+    "count_target": count_target,
+
+    "group_dimensions": group_dimensions,
+
+    "measures": measures,
+
+    "dimensions": dimensions,
+
+    # Time
+
+    "date_columns": date_columns,
+
+    "time_filter": time_filter,
+
+    # Execution
+
+    "order_strategy": order_strategy,
+
+    "limit_strategy": limit_strategy,
+
+    "having_condition": having_condition,
+
+    # Database
+
+    "required_tables": required_tables,
+
+    "relationships": relationships,
+
+    "join_plan": join_plan,
+
+    "alias_map": alias_map,
+
+    "schema": schema,
+
+    # Flags
+
+    "has_aggregation": has_aggregation
+}
+#
+#| الدالة الحالية              | مستقبلها       |
+#| --------------------------- | -------------- |
+#| detect_domain               | تبقى           |
+#| detect_intent               | تبقى           |
+#| prepare_query_context       | تبقى           |
+#| resolve_limit_strategy      | تندمج          |
+#| resolve_count_target        | تندمج          |
+#| resolve_final_dimensions    | نراجعها لاحقًا |
+#| resolve_grouping_dimensions | نراجعها لاحقًا |

@@ -1,16 +1,14 @@
 from fastapi import APIRouter, HTTPException, Request
-#from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from slowapi import Limiter
 from slowapi.util import get_remote_address
-#from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from models.schemas import Question
 from core.security import detect_injection
 from ai.ai_engine import ask_ai, sessions#, system_prompt
 from utils.sql_utils import clean_sql, fix_informix_sql
-#import os
+
 ##------------------------------------------------
 
 router = APIRouter()
@@ -25,8 +23,6 @@ def home(request: Request):
         request=request,
         name="index.html"
     )
-
-#limiter = Limiter(key_func=get_remote_address)
 
 ## -------- ASK --------
 @router.post("/ask")
@@ -63,15 +59,14 @@ def ask(request: Request, q: Question):
         if "This query" in response or "will return" in response:
             response = response.split("SELECT")[-1]
             response = "SELECT" + response
-#        if not response.strip().endswith(")"):
-#            response += "\n-- WARNING: possible truncated SQL"
+
         return {
             "response": response
         }
     except Exception as e:
         import logging
         logging.error(str(e))
-    
+
         raise HTTPException(
             status_code=500,
             detail=str(e)
@@ -106,4 +101,4 @@ def ask_stream(q: Question, request: Request):
 @router.post("/clear")
 def clear(q: Question):
     sessions[q.session_id] = [system_prompt]
-    return {"status": "cleared"}  
+    return {"status": "cleared"}

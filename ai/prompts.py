@@ -1,7 +1,7 @@
 from core.config import (
     DOMAINS
 )
-from compiler.sql_reasoning import detect_domain
+from reasoning.sql_reasoning import detect_domain
 #-------------------------------------
 """
 Legacy / Future Hybrid AI Prompt Layer
@@ -65,9 +65,6 @@ Please provide:
 - relevant column names
 """
 #--------------------------------------------
-    
-
-#-------------------------------------------------------------
 
 def build_schema_context(schema,query_plan):
 
@@ -79,7 +76,6 @@ def build_schema_context(schema,query_plan):
     schema_text = ""
 
     for table_name, columns in tables.items():
-
         schema_text += (
             f"Table: {table_name}\n"
         )

@@ -14,102 +14,8 @@ MAX_HISTORY = int(os.getenv("MAX_HISTORY", 10))
 
 if not MODEL_NAME:
     raise ValueError("GROQ_MODEL_NAME is not set")
-    
-#-------------------------------------------------
-# NATURAL LANGUAGE
-#-------------------------------------------------
 
-# Legacy
-# No longer used.
-# Safe to remove after verification.
 
-#DOMAIN_KEYWORDS = {
-#     "employees": [
-#        "employee",
-#        "employees",
-#        "staff",
-#        "worker"
-#    ],
-#
-#    "sales": [
-#        "sales",
-#        "sale",
-#        "revenue",
-#        "income"
-#    ],
-#
-#    "production": [
-#        "production",
-#        "produce",
-#        "factory",
-#        "manufacturing",
-#        "product"
-#    ]
-#}
-#
-#-------------------------------------------------
-# Legacy
-# Deprecated after Domain migration.
-BUSINESS_TERMS = {
-
-    "factory": [
-        "factory",
-        "factories",
-        "fact",
-        "fac"
-    ],
-
-    "product": [
-        "product",
-        "products",
-        "prod",
-        "item"
-    ],
-
-    "customer": [
-        "customer",
-        "customers",
-        "cust",
-        "client"
-    ]
-}
-#---------------------------------------------------
-# Legacy
-#BUSINESS_TABLES = {
-#
-#    "factory": [
-#        "prod_tbl"
-#    ],
-#
-#    "product": [
-#        "product_tbl",
-#        "prod_desc",
-#        "prod_tbl"
-#    ],
-#
-#    "customer": [
-#        "customer_tbl",
-#        "sales_tbl"
-#    ],
-#    "supplier": [
-#        "supplier_tbl",
-#        "purchase_tbl"
-#    ],
-#
-#    "employee": [
-#        "employee_tbl",
-#        "payroll_tbl"
-#    ]
-#}
-#------------------------------------------------
-# Legacy
-# Deprecated after Domain entity migration.
-#BUSINESS_KEYWORDS = {
-#    "production": ["prod_tbl"],
-#    "production data": ["prod_tbl"],
-#    "product name": ["prod_desc"],
-#    "products": ["prod_tbl"]
-#}
 #------------------------------------------------
 # SCHEMA ANALYSIS
 #------------------------------------------------
@@ -165,7 +71,7 @@ RELATIONSHIP_SUFFIXES = [
 RELATIONSHIP_HINTS = {}
 
 #------------------------------------------------------
-# SQL 
+# SQL
 #------------------------------------------------------
 AGGREGATION_KEYWORDS = {
     "SUM": ["total" , "sum" ],
@@ -182,19 +88,50 @@ LIMIT_PATTERNS = {
     "first_n": r"first\s+(\d+)"
 }
 #------------------------------------------------------
-#Legacy
-#Unused
-#Ready for Removal
+BUSINESS_TERMS = {
+    "factory": ["factory", "factories", "fact", "fac"],
+    "product": ["product", "products", "prod", "item"],
+    "customer": ["customer", "customers", "cust", "client"]
+}
+# ======================================================
+# BUSINESS KNOWLEDGE BASE
 #
-#DEFAULT_REPORT_DIMENSIONS = {
-#    "production": ["factory_id"],
-#    "sales": ["customer_id"],
-#    "inventory": ["item_id"]
-#}    
-#---------------------------------------------------
+# Each business domain represents one business capability.
+#
+# Every domain should define:
+#
+# - keywords
+#       Natural language terms used for domain detection.
+#
+# - entities
+#       Business entities mapped to related tables.
+#
+# - display_entities
+#       Business entities mapped to display columns.
+#
+# - tables
+#       Database tables that belong to this domain.
+#
+# - default_measure
+#       Default numeric measure used for aggregation.
+#
+# - default_date_column
+#       Default date column used for time filtering.
+#
+# - default_dimensions
+#       Default grouping dimensions for reports.
+#
+# - demo_schema
+#       Default demo schema for this domain.
+#
+# ======================================================
 DOMAINS = {
 
     "sales": {
+
+        # -------------------------
+        # DOMAIN DETECTION
+        # -------------------------
 
         "keywords": [
             "sales",
@@ -203,15 +140,9 @@ DOMAINS = {
             "income"
         ],
 
-        "tables": [
-            "sales_tbl",
-            "customer_tbl",
-            "product_tbl"
-        ],
-
-        "default_dimensions": [
-            "cust_no"
-        ],
+        # -------------------------
+        # BUSINESS KNOWLEDGE
+        # -------------------------
 
         "entities": {
 
@@ -228,12 +159,82 @@ DOMAINS = {
                 "product_tbl",
                 "sales_tbl"
             ]
-         
         },
+
+        "semantic_entities": {
+
+            "customer": "cust_no",
+            "product": "prod_id"
+        },
+
+        "display_entities": {
+
+            "customer": "cust_name",
+            "product": "prod_name"
+        },
+
+        # -------------------------
+        # MEASURE KNOWLEDGE
+        # -------------------------
+
+        # Internal business measure
+        # mapped directly to database column.
+
+        "measures": {
+
+            "sales": "sales_amt"
+        },
+
+        # User language / business vocabulary.
+        # Different expressions can refer
+        # to the same business measure.
+
+        "measure_synonyms": {
+
+            "sales": [
+                "sales",
+                "revenue",
+                "income"
+            ]
+        },
+
+        # -------------------------
+        # DATABASE
+        # -------------------------
+
+        "tables": [
+
+            "sales_tbl",
+            "customer_tbl",
+            "product_tbl"
+        ],
+
+        # -------------------------
+        # REPORTING
+        # -------------------------
+
+        "default_measure": "sales",
+
+        "default_date_column": "sale_date",
+
+        "default_dimensions": [
+
+            "customer"
+        ],
+
+        # -------------------------
+        # DEMO
+        # -------------------------
+
         "demo_schema": "sales_demo"
     },
 
+
     "production": {
+
+        # -------------------------
+        # DOMAIN DETECTION
+        # -------------------------
 
         "keywords": [
             "production",
@@ -241,14 +242,9 @@ DOMAINS = {
             "manufacturing"
         ],
 
-        "tables": [
-            "prod_tbl",
-            "prod_desc"
-        ],
-
-        "default_dimensions": [
-            "factory_id"
-        ],
+        # -------------------------
+        # BUSINESS KNOWLEDGE
+        # -------------------------
 
         "entities": {
 
@@ -259,12 +255,77 @@ DOMAINS = {
             "factory": [
                 "prod_tbl"
             ],
-            
+
             "product": [
                 "prod_desc",
                 "prod_tbl"
             ]
         },
+
+        "semantic_entities": {
+
+            "factory": "factory_id",
+            "product": "prod_id"
+        },
+
+        "display_entities": {
+
+            "product": "prod_name"
+        },
+
+        # -------------------------
+        # MEASURE KNOWLEDGE
+        # -------------------------
+
+        # Internal business measure
+        # mapped directly to database column.
+
+        "measures": {
+
+            "production": "qty"
+        },
+
+        # User language / business vocabulary.
+
+        "measure_synonyms": {
+
+            "production": [
+                "production",
+                "produce",
+                "manufacturing",
+                "output",
+                "quantity",
+                "qty"
+            ]
+        },
+
+        # -------------------------
+        # DATABASE
+        # -------------------------
+
+        "tables": [
+
+            "prod_tbl",
+            "prod_desc"
+        ],
+
+        # -------------------------
+        # REPORTING
+        # -------------------------
+
+        "default_measure": "production",
+
+        "default_date_column": "prod_date",
+
+        "default_dimensions": [
+
+            "factory"
+        ],
+
+        # -------------------------
+        # DEMO
+        # -------------------------
+
         "demo_schema": "production_demo"
     }
 }

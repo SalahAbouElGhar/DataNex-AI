@@ -1,177 +1,281 @@
-# 🚀 DataNex AI
+# ًںڑ€ DataNex AI
 
-⚠️ Beta Release
+âڑ ï¸ڈ Beta Release
 
-An AI-powered SQL generation engine that transforms natural language into
-production-ready IBM Informix SQL through a structured AST-based compiler
-pipeline.
+An AI-powered **Business Reasoning Engine** that transforms natural language requests into business
+decisions, structured query plans, and validated IBM Informix SQL through a deterministic AST-based
+compilation pipeline.
 
 ## Project Overview
 
 Writing SQL queries can be time-consuming, especially when working with
 large databases or database-specific dialects such as IBM Informix.
 
-DataNex AI simplifies this process by transforming natural language requests 
-into structured Abstract Syntax Trees (ASTs), which are then compiled into 
-clean, production-ready IBM Informix SQL.
+DataNex AI addresses this challenge by interpreting natural language requests
+through a structured business reasoning pipeline. The system identifies
+business meaning, extracts relevant facts, makes explicit business decisions,
+and builds a database-aware query plan before producing a structured
+Abstract Syntax Tree (AST).
 
-Unlike systems that generate SQL directly from prompts, DataNex AI follows 
-a structured compilation pipeline that separates query understanding from SQL
-generation. This architecture improves maintainability, testability,
-and long-term reliability while making it easier to extend the compiler
-with new SQL capabilities.
+The AST is then validated and compiled into clean, deterministic IBM Informix
+SQL using a dedicated SQL compiler.
 
-The project is built on software engineering best practices,
-including regression testing, modular architecture, and comprehensive
-documentation, providing a solid foundation for future growth.
+Unlike systems that translate prompts directly into SQL, DataNex AI separates
+language understanding, business reasoning, query planning, AST construction,
+validation, and SQL compilation into distinct architectural stages.
 
-By combining artificial intelligence with a structured compiler architecture, 
-DataNex AI delivers reliable SQL generation while providing a solid foundation for future growth.
+This separation improves maintainability, testability, reliability, and
+traceability while making it easier to extend the system with new business
+rules and SQL capabilities.
+
+The project is built around software engineering principles such as clear
+module responsibilities, deterministic compilation, Golden Tests,
+end-to-end regression testing, and structured documentation.
+
+By combining artificial intelligence with a structured reasoning and compiler
+architecture, DataNex AI provides a foundation for consistent and extensible
+natural-language interaction with IBM Informix SQL and database schemas.
+
 
 ![DataNex AI Interface](screenshots/UI.png)
 
 ## Key Features
 
-- **Natural Language to SQL**
-  - Converts natural language requests into production-ready IBM Informix SQL.
+* **Natural Language Understanding**
 
-- **Structured AST Pipeline**
-  - Uses a structured Abstract Syntax Tree (AST) to clearly separate query understanding from SQL generation.
+  * Interprets natural language requests and extracts the business facts required to process the request.
 
-- **IBM Informix Support**
-  - Generates SQL using Informix-specific syntax, including features such as `FIRST` instead of `LIMIT`.
+* **Business Reasoning**
 
-- **Regression-Tested Compiler**
-  - Protected by a growing Golden Test suite to ensure stable and predictable SQL generation.
+  * Separates business meaning from database-specific implementation details.
+  * Resolves business objectives, measures, dimensions, aggregations, time filters, and ranking or selection requirements.
 
-- **Modular Architecture**
-  - Designed with independent components that simplify maintenance, testing, and future enhancements.
+* **Business Decision Layer**
 
-- **Secure Query Generation**
-  - Includes validation layers and safeguards against unsupported or unsafe SQL generation.
+  * Represents the interpreted request as an explicit business decision before query planning begins.
 
-- **Developer-Friendly**
-  - Well-structured codebase, comprehensive documentation, and engineering-focused design.
-  
-  
+* **Database-Aware Query Planning**
+
+  * Maps business decisions to database semantics such as tables, columns, relationships, dates, measures, aliases, ordering, and query structure.
+
+* **Structured AST Pipeline**
+
+  * Represents the planned query as a structured Abstract Syntax Tree (AST) before SQL compilation.
+
+* **Deterministic IBM Informix SQL Compiler**
+
+  * Compiles validated AST structures into clean IBM Informix SQL using Informix-specific syntax such as `FIRST` instead of `LIMIT`.
+
+* **Multi-Table and Relationship Support**
+
+  * Supports multiple tables, relationship discovery, JOIN planning, aliases, and display-column selection.
+
+* **Aggregation and Query Semantics**
+
+  * Supports `SUM`, `COUNT`, `AVG`, `MIN`, and `MAX`, together with `GROUP BY` and `HAVING` behavior.
+
+* **Ranking and Selection**
+
+  * Supports Top N, Bottom N, Latest N, and First N query requirements with appropriate ordering and Informix `FIRST N` semantics.
+
+* **Regression-Tested Behavior**
+
+  * Uses Golden Tests for deterministic compiler behavior and end-to-end regression tests to protect business and semantic behavior.
+
+* **Modular Architecture**
+
+  * Organizes the system by clear architectural responsibilities, making the codebase easier to maintain, test, and evolve.
+
+* **Developer-Friendly**
+
+  * Includes structured documentation, testing guidelines, regression specifications, and explicit architectural principles.
+
 ## Why DataNex AI?
 
 Many AI-powered SQL generators translate natural language directly into
-SQL. While this approach can produce useful SQL, it tightly couples query 
-understanding with SQL generation, making the system harder 
-to validate, test, and extend.
+SQL. While this approach can produce useful SQL, it tightly couples language
+understanding with SQL generation, making the system harder to validate,
+test, explain, and extend.
 
 DataNex AI follows a different approach.
 
-Instead of generating SQL directly, the project separates the process
-into well-defined stages. Each stage has a single responsibility,
-resulting in a compiler that is easier to understand, maintain, test,
-and evolve.
+Instead of treating SQL generation as a single AI step, DataNex separates the
+process into well-defined architectural stages. Natural language is first
+normalized and interpreted, relevant facts are extracted, business meaning
+is resolved, and an explicit business decision is created before any
+database-specific query structure is introduced.
+
+The resulting query plan is then represented as a structured Abstract Syntax
+Tree (AST), validated, and compiled deterministically into IBM Informix SQL.
+
+This separation gives each stage a clear responsibility and makes the system
+easier to understand, test, maintain, and evolve.
 
 ```text
 Natural Language
-        │
-        ▼
- Intent Detection
-        │
-        ▼
- Query Planning
-        │
-        ▼
-      AST
-        │
-        ▼
- Query Validation
-        │
-        ▼
- SQL Compiler
-        │
-        ▼
+        â”‚
+        â–¼
+    Normalization
+        â”‚
+        â–¼
+  Fact Extraction
+        â”‚
+        â–¼
+  Reasoning Facts
+        â”‚
+        â–¼
+ Business Reasoning
+        â”‚
+        â–¼
+ Business Decision
+        â”‚
+        â–¼
+  Query Planning
+        â”‚
+        â–¼
+       AST
+        â”‚
+        â–¼
+    Validation
+        â”‚
+        â–¼
+   SQL Compiler
+        â”‚
+        â–¼
  IBM Informix SQL
 ```
 
-Each stage is independently testable and focuses on a single responsibility, 
-enabling DataNex AI to evolve without compromising the reliability of 
-previously supported SQL generation.
+Each stage can be tested according to its architectural responsibility.
+This allows DataNex AI to evolve while preserving previously approved
+business behavior and deterministic SQL generation.
 
 ### Query Processing Pipeline
 
 **Natural Language**
 
-The user describes the required query using plain English without
+The user describes the required business request using plain English without
 needing to know SQL syntax.
 
-**Query Understanding**
+**Normalization**
 
-The request is analyzed to identify tables, columns, filters,
-aggregations, joins, sorting, and other query components.
+The input is normalized into a consistent representation suitable for
+downstream fact extraction and reasoning. Normalization prepares the language
+without making business decisions.
 
-**Structured AST**
+**Fact Extraction**
 
-The extracted intent is transformed into a structured Abstract Syntax
-Tree (AST), providing a database-independent representation of the
-query before SQL generation.
+Relevant facts are extracted from the normalized request and available
+contexts. These may include the requested measure, aggregation function,
+grouping dimensions, time filter, ranking strategy, intent, and other
+reasoning facts.
 
-**AST Validation**
+**Reasoning Facts**
 
-The generated AST is validated to detect inconsistencies before it
-reaches the compiler, ensuring that only valid query structures are
-compiled.
+Extracted facts provide the factual representation consumed by the reasoning
+layers. Facts describe what was discovered from the request and context; they
+do not themselves define how the database should execute the request.
 
-**AST Compiler**
+**Business Reasoning**
 
-The validated AST is compiled into clean, readable, production-ready
-IBM Informix SQL using a deterministic compilation process.
+Business Reasoning interprets the available facts according to business rules.
+It determines the business meaning of the request without depending on
+database-specific column names, SQL syntax, or execution details.
 
-By separating query understanding from SQL generation, DataNex AI
-achieves a modular architecture that is easier to validate, regression
-test, maintain, and extend.
+**Business Decision**
 
-This layered design allows new SQL capabilities to be introduced with
-confidence while preserving the stability of existing compiler behavior.
+The interpreted request is represented as an explicit business decision.
+The decision describes what the user wants in business terms, including the
+business objective, entities, measure, aggregation, grouping, ranking,
+ordering, and time requirements.
 
-> **DataNex AI is not simply an AI that generates SQL.  
-> It is a structured SQL compilation engine powered by AI.**
+**Query Planning**
+
+The business decision is mapped to database-aware semantics. Query Planning
+resolves tables, columns, relationships, aliases, date columns, measures,
+ordering requirements, and other execution-related details required to build
+the query structure.
+
+**AST**
+
+The planned query is represented as a structured Abstract Syntax Tree (AST).
+The AST captures the decided query structure in a deterministic form before
+SQL generation.
+
+**Validation**
+
+The AST is validated before compilation so that invalid or inconsistent query
+structures are detected before reaching the SQL compiler.
+
+**SQL Compiler**
+
+The validated AST is compiled deterministically into clean IBM Informix SQL,
+using Informix-specific syntax and execution semantics.
+
+By separating normalization, fact extraction, business reasoning, business
+decisions, query planning, AST construction, validation, and SQL compilation,
+DataNex AI keeps each architectural stage focused on a clear responsibility.
+
+This separation makes the system easier to understand, test, maintain, and
+extend while protecting previously approved business behavior.
 
 ## Architecture Overview
 
-DataNex AI follows a layered architecture that separates query
-understanding, validation, and SQL generation into independent stages.
+DataNex AI follows a layered architecture designed to separate language
+understanding, business reasoning, database-aware query planning, structured
+query representation, validation, and SQL compilation.
 
-This design improves maintainability, simplifies testing, and allows
-new capabilities to be added without affecting existing compiler
-behavior.
+Each layer has a clear architectural responsibility and communicates with the
+next layer through explicit data structures and contracts.
 
 ```mermaid
 flowchart LR
 
     A[Natural Language]
-        --> B[Query Understanding]
+        --> B[Normalization]
 
     B
-        --> C[Structured AST]
+        --> C[Fact Extraction]
 
     C
-        --> D[AST Validation]
+        --> D[Reasoning Facts]
 
     D
-        --> E[AST Compiler]
+        --> E[Business Reasoning]
 
     E
-        --> F[IBM Informix SQL]
+        --> F[Business Decision]
+
+    F
+        --> G[Query Planning]
+
+    G
+        --> H[AST]
+
+    H
+        --> I[Validation]
+
+    I
+        --> J[SQL Compiler]
+
+    J
+        --> K[IBM Informix SQL]
 ```
 
 ### Layer Responsibilities
 
-| Stage | Responsibility |
-|--------|----------------|
-| **Natural Language** | Receives the user's request in plain English. |
-| **Query Understanding** | Extracts tables, columns, filters, aggregations, joins, sorting, and other query elements. |
-| **Structured AST** | Converts the extracted intent into a structured, database-independent representation. |
-| **AST Validation** | Verifies the AST before compilation to ensure structural consistency. |
-| **AST Compiler** | Generates clean, deterministic, production-ready IBM Informix SQL. |
-| **IBM Informix SQL** | Final SQL output ready for execution. |
-
+| Stage                  | Responsibility                                                                                                                            |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| **Natural Language**   | Receives the user's request in natural language.                                                                                          |
+| **Normalization**      | Prepares the input in a consistent representation without interpreting its business meaning.                                              |
+| **Fact Extraction**    | Discovers relevant facts such as intent, measure, dimensions, aggregation, time filters, and ranking requirements.                        |
+| **Reasoning Facts**    | Provides the factual representation consumed by the reasoning layers.                                                                     |
+| **Business Reasoning** | Interprets the discovered facts according to business rules and determines business meaning.                                              |
+| **Business Decision**  | Represents the requested behavior as an explicit business-level decision.                                                                 |
+| **Query Planning**     | Resolves database-aware semantics such as tables, columns, relationships, aliases, dates, measures, ordering, and execution requirements. |
+| **AST**                | Represents the planned query structure in a deterministic, structured form.                                                               |
+| **Validation**         | Verifies the AST before SQL compilation.                                                                                                  |
+| **SQL Compiler**       | Converts the validated AST into deterministic IBM Informix SQL.                                                                           |
+| **IBM Informix SQL**   | Final SQL representation generated from the validated AST.                                                                                |
 ## Getting Started
 
 Follow the steps below to set up and run DataNex AI locally.
@@ -180,14 +284,15 @@ Follow the steps below to set up and run DataNex AI locally.
 
 Before getting started, make sure you have the following installed:
 
-- Python 3.10 or later
-- Git
-- A valid Groq API key
+* Python 3.10 or later
+* Git
+* A valid Groq API key
 
 > **Note**
 >
-> DataNex AI generates IBM Informix SQL and does not require a running
-> database server to explore the SQL generation process.
+> DataNex AI generates and validates IBM Informix SQL locally and does not
+> require a running Informix database server to explore the SQL generation
+> process.
 
 ### Installation
 
@@ -211,7 +316,8 @@ pip install -r requirements.txt
 
 ### Configure Environment
 
-Create a `.env` file in the project root and configure the required environment variables:
+Create a `.env` file in the project root and configure the required
+environment variables:
 
 ```text
 GROQ_API_KEY=your_api_key_here
@@ -221,15 +327,17 @@ MAX_HISTORY=10
 
 Where:
 
-| Variable          | Description                                                                                                                                       |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GROQ_API_KEY`    | Your Groq API key used to access the language model.                                                                                              |
-| `GROQ_MODEL_NAME` | The Groq model used for query generation. The default configuration uses `llama-3.1-8b-instant`, but any compatible Groq model can be configured. |
-| `MAX_HISTORY`     | Maximum number of conversation turns retained in the session history.                                                                             |
+| Variable          | Description                                                                        |
+| ----------------- | ---------------------------------------------------------------------------------- |
+| `GROQ_API_KEY`    | Groq API key used to access the configured language model.                         |
+| `GROQ_MODEL_NAME` | Model used by DataNex AI for natural-language interpretation and query generation. |
+| `MAX_HISTORY`     | Maximum number of conversation turns retained in the session history.              |
 
-The current Beta release has been developed and tested using the llama-3.1-8b-instant model. 
-Other compatible Groq models may also work, but this model is the recommended default for this release.
+The Beta release has been developed and tested using the
+`llama-3.1-8b-instant` model.
 
+Other compatible Groq models may work, but model compatibility depends on
+the configured model and the current implementation.
 
 ### Run the Application
 
@@ -243,44 +351,72 @@ uvicorn main:app --reload
 
 After the server starts, open:
 
-```
+```text
 http://127.0.0.1:8000
 ```
 
-The DataNex AI web interface will be available in your browser, 
-allowing you to start generating IBM Informix SQL from natural language queries.
+The DataNex AI web interface will be available in your browser, allowing you
+to submit natural-language business requests and inspect the resulting
+IBM Informix SQL.
 
 ## Current Capabilities
 
-- ✅ Natural language to IBM Informix SQL
-- ✅ Single-table and multi-table queries
-- ✅ Automatic INNER JOIN generation
-- ✅ Relationship discovery
-- ✅ Display-column resolution (e.g., product name, customer name)
-- ✅ Aggregation (SUM, COUNT, AVG, MIN, MAX)
-- ✅ GROUP BY and HAVING
-- ✅ Time-based filtering
-- ✅ Ranking queries (Top / Bottom)
-- ✅ AST-based SQL compilation
-- ✅ Golden Test regression suite
+* âœ… Natural language business-request understanding
+* âœ… Structured normalization and fact extraction
+* âœ… Business reasoning and explicit business decisions
+* âœ… Database-aware query planning
+* âœ… Single-table and multi-table queries
+* âœ… Automatic INNER JOIN generation
+* âœ… Relationship discovery
+* âœ… Table aliases and display-column resolution
+
+  * Examples: product name, customer name
+* âœ… Aggregation
+
+  * `SUM`
+  * `COUNT`
+  * `AVG`
+  * `MIN`
+  * `MAX`
+* âœ… `GROUP BY` and `HAVING`
+* âœ… Relative time-based filtering
+* âœ… Ranking and selection
+
+  * Top N
+  * Bottom N
+  * Latest N
+  * First N
+* âœ… Informix-specific SQL generation
+
+  * Uses `FIRST N` rather than `LIMIT`
+* âœ… Structured AST construction
+* âœ… AST validation
+* âœ… Deterministic AST-to-IBM Informix SQL compilation
+* âœ… Golden Test regression suite
+* âœ… End-to-end regression coverage for business and query behavior
 
 ## Example Usage
 
-DataNex AI converts natural language requests into IBM Informix SQL through a structured reasoning pipeline.
+DataNex AI converts natural language business requests into validated
+IBM Informix SQL through a structured reasoning and compilation pipeline.
 
-### Option 1 — Using the Built-in Demo Schemas
+### Option 1 â€” Using the Built-in Demo Schemas
 
-For common demonstrations (such as Sales or Production), simply enter a natural language request:
+For supported demonstration domains such as Sales or Production, simply enter
+a natural language request:
 
 ```text
 total production by product name
 ```
 
-DataNex AI automatically selects the appropriate demo schema, detects table relationships, builds the required JOINs, and generates Informix SQL.
+DataNex AI interprets the request, resolves the required business meaning,
+selects the appropriate demo schema, discovers relevant table relationships,
+plans the required JOINs, and compiles the resulting query structure into
+IBM Informix SQL.
 
-### Option 2 — Using Your Own Database Schema
+### Option 2 â€” Using Your Own Database Schema
 
-For your own database, provide the schema once at the beginning of the conversation:
+For your own database, provide the schema at the beginning of the session:
 
 ```text
 table prod_tbl
@@ -302,15 +438,26 @@ Then ask your question naturally:
 total production by factory
 ```
 
-DataNex AI stores the schema for the current session and uses it to generate validated IBM Informix SQL for subsequent requests.
+DataNex AI uses the provided schema to resolve the required database
+semantics and generates validated IBM Informix SQL for subsequent requests
+within the current session.
 
 > **Current Beta Behavior**
 >
 > * Built-in demo schemas are used automatically for supported demonstration domains.
-> * For custom databases, provide your schema once per session.
-> * Future versions will support automatic schema discovery directly from IBM Informix system catalogs.
+> * Custom database schemas are provided once per session.
+> * Schema and relationship information are used during database-aware query planning.
+> * Future versions may support automatic schema discovery from IBM Informix system catalogs.
 
 ### Generated SQL
+
+For the request:
+
+```text
+total production by factory
+```
+
+DataNex AI produces:
 
 ```sql
 SELECT
@@ -326,199 +473,327 @@ ORDER BY
   total_qty DESC
 ```
 
-Every SQL statement shown above is generated deterministically from
-a validated AST rather than being generated directly by the language
-model.
+The SQL is not generated directly from the natural-language request.
 
-Additional query scenarios and compiler behaviors are verified by the
-project's Golden Test regression suite.
+Instead, DataNex AI first resolves the business meaning and creates an
+explicit business decision. Query Planning then maps that decision to
+database-aware semantics, which are represented as a structured AST.
+
+The validated AST is finally compiled deterministically into IBM Informix SQL.
+
+This separation allows business reasoning and SQL compilation to evolve
+independently while preserving approved query behavior.
+
+Additional query scenarios and compiler behaviors are protected by the
+project's Golden Test regression suite and end-to-end regression coverage.
 
 ![Generated SQL Example](screenshots/result.png)
 
 ## Project Structure
 
-DataNex AI is organized into modular components, each responsible for a
-specific stage of the SQL generation pipeline. This separation improves
-maintainability, simplifies testing, and allows individual components to
-evolve independently as the project grows.
+DataNex AI is organized by clear architectural responsibilities.
+The project structure reflects the separation between AI interaction, business reasoning,
+ context preparation, query planning, validation, and SQL compilation.
 
 ```text
 DataNex-AI/
-│
-├── ai/                 # AI interaction and prompt management
-├── api/                # FastAPI routes and API endpoints
-├── compiler/           # Query planning and SQL compilation
-├── core/               # Configuration, logging, and security
-├── logs/               # Application log files
-├── models/             # Pydantic data models
-├── schema/             # Schema analysis and metadata utilities
-├── screenshots/        # Project screenshots
-├── static/             # CSS and JavaScript assets
-├── templates/          # HTML templates
-├── tests/              # Golden Test regression suite
-├── utils/              # Shared utility functions
-├── validators/         # Query validation
-│
-├── main.py
-├── .env.example
-├── .gitignore
-├── CHANGELOG.md
-├── README.md
-├── requirements.txt
-└── start.sh
+â”‚
+â”œâ”€â”€ ai/
+â”‚   â”œâ”€â”€ ai_engine.py
+â”‚   â””â”€â”€ prompts.py
+â”‚
+â”œâ”€â”€ api/
+â”‚   â””â”€â”€ routes.py
+â”‚
+â”œâ”€â”€ compiler/
+â”‚   â”œâ”€â”€ ast_compiler.py
+â”‚   â”œâ”€â”€ query_ast.py
+â”‚   â””â”€â”€ sql_generator.py
+â”‚
+â”œâ”€â”€ context/
+â”‚   â”œâ”€â”€ database_context.py
+â”‚   â”œâ”€â”€ knowledge_context.py
+â”‚   â””â”€â”€ reasoning_context.py
+â”‚
+â”œâ”€â”€ core/
+â”‚   â”œâ”€â”€ config.py
+â”‚   â”œâ”€â”€ logger.py
+â”‚   â””â”€â”€ security.py
+â”‚
+â”œâ”€â”€ knowledge/
+â”‚   â”œâ”€â”€ business_constants
+â”‚   â””â”€â”€ business_keywords
+â”‚
+â”œâ”€â”€ logs/
+â”‚   â””â”€â”€ app.log
+â”‚
+â”œâ”€â”€ models/
+â”‚   â””â”€â”€ schemas.py
+â”‚
+â”œâ”€â”€ reasoning/
+â”‚   â”œâ”€â”€ business_facts.py
+â”‚   â”œâ”€â”€ business_reasoning.py
+â”‚   â”œâ”€â”€ measure_reasoning.py
+â”‚   â””â”€â”€ sql_reasoning.py
+â”‚
+â”œâ”€â”€ schema/
+â”‚   â””â”€â”€ schema_utils.py
+â”‚
+â”œâ”€â”€ screenshots/
+â”‚   â”œâ”€â”€ result.png
+â”‚   â””â”€â”€ UI.png
+â”‚
+â”œâ”€â”€ specification/
+â”‚   â””â”€â”€ REGRESSION_TEST_RANKING_SELECTION.md
+â”‚
+â”œâ”€â”€ static/
+â”‚   â”œâ”€â”€ app.js
+â”‚   â””â”€â”€ style.css
+â”‚
+â”œâ”€â”€ templates/
+â”‚   â””â”€â”€ index.html
+â”‚
+â”œâ”€â”€ tests/
+â”‚   â”œâ”€â”€ data/
+â”‚   â”‚   â”œâ”€â”€ regression_test_cases.py
+â”‚   â”‚   â”œâ”€â”€ test_cases.py
+â”‚   â”‚   â””â”€â”€ test_fixtures.py
+â”‚   â”‚
+â”‚   â”œâ”€â”€ test_ast_compiler.py
+â”‚   â”œâ”€â”€ test_regression_ranking_selection.py
+â”‚   â”œâ”€â”€ TEST_INDEX.md
+â”‚   â””â”€â”€ testing_guidelines.md
+â”‚
+â”œâ”€â”€ utils/
+â”‚   â”œâ”€â”€ normalization.py
+â”‚   â”œâ”€â”€ sql_utils.py
+â”‚   â””â”€â”€ text_utils.py
+â”‚
+â”œâ”€â”€ validators/
+â”‚   â””â”€â”€ validators.py
+â”‚
+â”œâ”€â”€ main.py
+â”œâ”€â”€ .env.example
+â”œâ”€â”€ .gitignore
+â”œâ”€â”€ CHANGELOG.md
+â”œâ”€â”€ DESIGN_PRINCIPLES.md
+â”œâ”€â”€ LICENSE
+â”œâ”€â”€ README.md
+â”œâ”€â”€ requirements.txt
+â””â”€â”€ start.sh
 ```
 
 ### Directory Responsibilities
 
-| Directory / File | Responsibility |
-|------------------|----------------|
-| `ai/` | Handles AI interaction, prompt construction, and communication with the language model. |
-| `api/` | Defines the FastAPI endpoints exposed by the application. |
-| `compiler/` | Converts structured query representations into IBM Informix SQL. |
-| `core/` | Contains shared application configuration, logging, and security utilities. |
-| `logs/` | Stores application log files generated during execution. |
-| `models/` | Defines Pydantic models used by the API. |
-| `schema/` | Provides schema analysis and metadata helper functions. |
-| `screenshots/` | Contains screenshots used in the project documentation. |
-| `static/` | Stores JavaScript and CSS resources for the web interface. |
-| `templates/` | Contains HTML templates rendered by FastAPI. |
-| `tests/` | Contains the Golden Test regression suite and testing documentation. |
-| `utils/` | Provides reusable helper functions shared across the project. |
-| `validators/` | Validates query plans before SQL compilation. |
-| `main.py` | Application entry point. |
-| `README.md` | Project overview and user documentation. |
-| `CHANGELOG.md` | Records notable changes between releases. |
-| `requirements.txt` | Lists the project's Python dependencies. |
-| `.env.example` | Template for required environment variables. |
+| Directory / File           | Responsibility                                                                                    |
+| -------------------------- | ------------------------------------------------------------------------------------------------- |
+| **`ai/`**                  | AI interaction and prompt-related functionality.                                                  |
+| **`api/`**                 | FastAPI routes and API-facing application endpoints.                                              |
+| **`compiler/`**            | Structured query representation and deterministic SQL compilation.                                |
+| **`context/`**             | Prepares and separates database, knowledge, and reasoning contexts used by downstream processing. |
+| **`core/`**                | Application configuration, logging, and security-related infrastructure.                          |
+| **`knowledge/`**           | Business constants and business vocabulary used by the reasoning pipeline.                        |
+| **`logs/`**                | Application log output.                                                                           |
+| **`models/`**              | Shared application and data schemas.                                                              |
+| **`reasoning/`**           | Fact extraction, business reasoning, measure reasoning, and query reasoning.                      |
+| **`schema/`**              | Database schema parsing and schema-related utilities.                                             |
+| **`screenshots/`**         | Project interface and generated-result screenshots used in documentation.                         |
+| **`specification/`**       | Written specifications for approved regression behavior.                                          |
+| **`static/`**              | Front-end JavaScript and CSS assets.                                                              |
+| **`templates/`**           | HTML templates used by the web interface.                                                         |
+| **`tests/`**               | Golden tests, end-to-end regression tests, test data, fixtures, and testing documentation.        |
+| **`utils/`**               | Lower-level reusable utilities such as normalization, SQL helpers, and text helpers.              |
+| **`validators/`**          | Validation logic applied before compilation.                                                      |
+| **`main.py`**              | Application entry point.                                                                          |
+| **`.env.example`**         | Example environment configuration.                                                                |
+| **`CHANGELOG.md`**         | Project change history.                                                                           |
+| **`DESIGN_PRINCIPLES.md`** | Core architectural and development principles.                                                    |
+| **`LICENSE`**              | Project license.                                                                                  |
+| **`README.md`**            | Project documentation and usage guide.                                                            |
+| **`requirements.txt`**     | Python dependencies.                                                                              |
+| **`start.sh`**             | Application startup script.                                                                       |
 
-The modular architecture allows each component to be developed,
-tested, and maintained independently while keeping the overall SQL
-generation pipeline clean, extensible, and easy to understand.
+
+This structure allows each component to evolve independently while preserving clear
+ architectural boundaries and testable responsibilities.
 
 ## Testing
 
-DataNex AI is developed with a strong emphasis on reliability and
-regression protection.
+DataNex AI is developed with a strong emphasis on reliability,
+deterministic behavior, and regression protection.
 
-Instead of relying solely on manual verification, the project uses a
-Golden Test regression suite to ensure that every approved compiler
-behavior remains stable as the codebase evolves.
+The project uses two complementary levels of testing:
 
-Each Golden Test defines the expected SQL generated from a specific AST.
-Whenever the compiler is modified, the generated SQL is compared against
-the approved output to detect unintended behavioral changes.
+* **Golden Tests**
 
-### Running the Test Suite
+  * Protect deterministic compiler behavior.
+  * Each test defines an approved AST and its expected IBM Informix SQL output.
+  * Compiler changes are checked against the approved SQL to detect unintended changes.
 
-Execute the complete regression suite using:
+* **End-to-End Regression Tests**
+
+  * Protect business and query behavior across the complete processing pipeline.
+  * Tests cover the flow from natural-language requests through facts, business
+    decisions, query planning, AST construction, and final SQL generation.
+
+### Running Golden Tests
+
+Run the AST-to-SQL Golden Test suite with:
 
 ```bash
 python -m pytest tests/test_ast_compiler.py -v -s
 ```
 
-A successful test run confirms that the current implementation remains
-consistent with the approved compiler behavior.
+A successful run confirms that deterministic compiler behavior remains
+consistent with the approved Golden Test outputs.
 
-### Current Coverage
+### Running End-to-End Regression Tests
 
-The current Golden Test suite verifies compiler behavior for:
+Run the current ranking and selection regression tests with:
 
-- Raw SELECT queries
-- Aggregation functions (`SUM`, `AVG`, `MAX`, `MIN`, `COUNT`)
-- `COUNT(DISTINCT)`
-- `GROUP BY`
-- `HAVING`
-- Relative date filters (Today, Yesterday, This Month, This Year)
-- `FIRST` (Top N)
-- SQL ordering
-- Table aliases
+```bash
+python -m pytest tests/test_regression_ranking_selection.py -v -s
+```
 
-The regression suite continues to grow as new compiler capabilities are
-implemented.
+These tests protect approved behavior for:
+
+* Top N selection
+* Bottom N selection
+* Latest N selection
+* First N selection
+
+### Current Golden Test Coverage
+
+The Golden Test suite currently verifies compiler behavior for:
+
+* Raw `SELECT` queries
+* Aggregation functions (`SUM`, `AVG`, `MAX`, `MIN`, `COUNT`)
+* `COUNT(DISTINCT)`
+* `GROUP BY`
+* `HAVING`
+* Relative date filters
+* Informix `FIRST N`
+* SQL ordering
+* Table aliases
+* Multi-table query structures
+
+The test suite continues to grow as new business and compiler capabilities
+are implemented.
 
 For a complete description of the testing philosophy, Golden Tests,
-naming conventions, and best practices, see:
+regression practices, naming conventions, and best practices, see:
 
 `tests/testing_guidelines.md`
 
+Additional approved behavior specifications are documented under:
+
+`specification/`
+
 ## Roadmap
 
-DataNex AI is an evolving project focused on reliable, explainable, and maintainable IBM Informix SQL generation. The roadmap reflects both completed milestones and planned enhancements.
+DataNex AI is an evolving project focused on reliable, maintainable, and
+extensible natural-language interaction with IBM Informix.
+
+The roadmap reflects the current Beta foundation and the capabilities planned
+for future releases.
 
 ### Beta (Completed)
 
-* [x] Natural language to IBM Informix SQL
-* [x] AST-based SQL compilation
-* [x] Query validation
-* [x] Golden Test regression suite
-* [x] Modular compiler architecture
-* [x] Multi-table query support
+* [x] Natural language request understanding
+* [x] Input normalization and fact extraction
+* [x] Business reasoning
+* [x] Explicit business decision layer
+* [x] Database-aware query planning
+* [x] AST-based query representation and compilation
+* [x] AST validation
+* [x] Deterministic IBM Informix SQL compilation
+* [x] Single-table and multi-table query support
 * [x] Relationship discovery
 * [x] JOIN planning and compilation
-* [x] Display-column resolution
-* [x] Demo schema support
-* [x] Comprehensive project documentation
+* [x] Table aliases and display-column resolution
+* [x] Aggregation (`SUM`, `COUNT`, `AVG`, `MIN`, `MAX`)
+* [x] `GROUP BY` and `HAVING`
+* [x] Relative time-based filtering
+* [x] Top N and Bottom N ranking
+* [x] Latest N and First N selection
+* [x] Informix `FIRST N` support
+* [x] Built-in demo schema support
+* [x] Custom schema support
+* [x] Golden Test regression suite
+* [x] End-to-end regression coverage
+* [x] Architectural and testing documentation
 
 ### Version 1.0
 
-* [ ] Enhanced semantic reasoning
-* [ ] Cross-domain query understanding
-* [ ] Improved schema understanding
-* [ ] Improved natural language understanding
-* [ ] Advanced aggregation and HAVING support
+* [ ] Advanced semantic reasoning
+* [ ] Broader natural-language query understanding
+* [ ] Expanded cross-domain support
+* [ ] More flexible schema understanding
 * [ ] Expanded IBM Informix SQL coverage
-* [ ] Larger Golden Test coverage
+* [ ] Larger Golden Test and end-to-end regression coverage
 * [ ] Enhanced compiler diagnostics and error handling
-* [ ] Domain-aware schema selection
+* [ ] Broader domain-aware schema selection
+* [ ] Improved query validation and unsupported-query diagnostics
 
 ### Future Releases
 
 * [ ] Direct IBM Informix database connectivity
-* [ ] Automatic schema discovery from system catalogs
+* [ ] Automatic schema discovery from IBM Informix system catalogs
 * [ ] Interactive schema exploration
-* [ ] Conversation history
+* [ ] Extended conversation and session management
 * [ ] User authentication
 * [ ] Web deployment
 * [ ] SaaS platform
 * [ ] Query explanation and AST visualization
 * [ ] Semantic business glossary support
+* [ ] Expanded business-domain knowledge and reasoning capabilities
 
-The roadmap reflects the current direction of the project and 
-will continue to evolve as new compiler capabilities, reasoning features, 
-and architectural improvements are introduced.
-
+The roadmap reflects the current direction of the project and will continue
+to evolve as new business reasoning capabilities, query semantics, compiler
+features, and architectural improvements are introduced.
 ## Contributing
 
 Contributions are welcome and greatly appreciated.
 
 Whether you are fixing a bug, improving documentation, expanding the
-Golden Test suite, or introducing new compiler capabilities, every
-contribution helps DataNex AI become more reliable and useful.
+Golden Test suite, or introducing new business reasoning or compiler
+capabilities, every contribution helps DataNex AI become more reliable
+and useful.
 
 Before submitting a contribution, please ensure that:
 
-- The code follows the existing project structure and coding style.
-- New compiler behavior is accompanied by appropriate Golden Tests.
-- Existing Golden Tests continue to pass.
-- Documentation is updated when introducing significant changes.
+* The code follows the existing project structure and coding style.
+* New compiler behavior is accompanied by appropriate Golden Tests.
+* New business or semantic behavior is accompanied by appropriate
+  end-to-end regression coverage.
+* Existing approved tests continue to pass.
+* Documentation is updated when introducing significant changes.
 
 DataNex AI values correctness over complexity.
 
 Improvements should preserve the reliability, readability, and
-maintainability of the compiler while keeping the SQL generation process
-deterministic and easy to validate.
+maintainability of the system while keeping business reasoning explicit,
+query planning structured, and SQL compilation deterministic.
 
-Before opening a pull request, please run the complete regression suite:
+### Running the Tests
+
+Run the Golden Test suite with:
 
 ```bash
 python -m pytest tests/test_ast_compiler.py -v -s
 ```
 
-Well-tested contributions are always preferred over large,
-untested feature additions.
+Run the current end-to-end ranking and selection regression tests with:
 
-Every contribution should improve the project without compromising 
-the reliability of previously approved compiler behavior.
+```bash
+python -m pytest tests/test_regression_ranking_selection.py -v -s
+```
+
+Well-tested contributions are preferred over large, untested feature
+additions.
+
+Every contribution should improve the project without compromising the
+reliability of previously approved behavior.
 
 ## Author
 

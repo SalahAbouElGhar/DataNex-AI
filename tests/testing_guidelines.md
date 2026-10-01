@@ -16,6 +16,19 @@ As the compiler evolves, these tests form a growing regression suite
 that ensures previously supported SQL generation continues to work
 as expected.
 
+## Testing Scope
+
+This document defines the testing philosophy and practices for the
+AST Compiler Golden Test suite.
+
+Golden Tests protect deterministic AST-to-SQL compiler behavior.
+
+End-to-End Regression Tests protect business and query behavior across the
+broader DataNex AI processing pipeline.
+
+The two test levels complement each other and serve different architectural
+responsibilities.
+
 ## Purpose
 
 The purpose of this test suite is to ensure that the AST Compiler
@@ -368,11 +381,18 @@ features:
 
 - FIRST (Top N)
 
-### Current Golden Tests
+### ### Current Golden Tests
 
-- AST-001 → AST-012
+The current Golden Test suite includes approved compiler scenarios documented
+in `tests/TEST_INDEX.md`, currently covering test IDs from `AST-001` through
+the defined scenarios up to `AST-051`.
 
-The regression suite will continue to expand as new compiler features
+The test index is the authoritative reference for the currently implemented
+Golden Test cases.
+
+
+The regression suite will continue to expand as new compiler and query behaviors
 are implemented and approved.
 
-This document is intended to evolve alongside the AST Compiler and its regression suite.
+This document is intended to evolve alongside the AST Compiler, its Golden Tests,
+and the broader regression suite.
