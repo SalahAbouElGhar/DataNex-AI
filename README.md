@@ -1,6 +1,6 @@
-# ًںڑ€ DataNex AI
+# 🚀 DataNex AI
 
-âڑ ï¸ڈ Beta Release
+⚠️ Beta Release
 
 An AI-powered **Business Reasoning Engine** that transforms natural language requests into business
 decisions, structured query plans, and validated IBM Informix SQL through a deterministic AST-based
@@ -113,35 +113,35 @@ easier to understand, test, maintain, and evolve.
 
 ```text
 Natural Language
-        â”‚
-        â–¼
+        │
+        ▼
     Normalization
-        â”‚
-        â–¼
+        │
+        ▼
   Fact Extraction
-        â”‚
-        â–¼
+        │
+        ▼
   Reasoning Facts
-        â”‚
-        â–¼
+        │
+        ▼
  Business Reasoning
-        â”‚
-        â–¼
+        │
+        ▼
  Business Decision
-        â”‚
-        â–¼
+        │
+        ▼
   Query Planning
-        â”‚
-        â–¼
+        │
+        ▼
        AST
-        â”‚
-        â–¼
+        │
+        ▼
     Validation
-        â”‚
-        â–¼
+        │
+        ▼
    SQL Compiler
-        â”‚
-        â–¼
+        │
+        ▼
  IBM Informix SQL
 ```
 
@@ -361,39 +361,39 @@ IBM Informix SQL.
 
 ## Current Capabilities
 
-* âœ… Natural language business-request understanding
-* âœ… Structured normalization and fact extraction
-* âœ… Business reasoning and explicit business decisions
-* âœ… Database-aware query planning
-* âœ… Single-table and multi-table queries
-* âœ… Automatic INNER JOIN generation
-* âœ… Relationship discovery
-* âœ… Table aliases and display-column resolution
+* ✅  Natural language business-request understanding
+* ✅  Structured normalization and fact extraction
+* ✅  Business reasoning and explicit business decisions
+* ✅  Database-aware query planning
+* ✅  Single-table and multi-table queries
+* ✅  Automatic INNER JOIN generation
+* ✅  Relationship discovery
+* ✅  Table aliases and display-column resolution
 
   * Examples: product name, customer name
-* âœ… Aggregation
+* ✅  Aggregation
 
   * `SUM`
   * `COUNT`
   * `AVG`
   * `MIN`
   * `MAX`
-* âœ… `GROUP BY` and `HAVING`
-* âœ… Relative time-based filtering
-* âœ… Ranking and selection
+* ✅  `GROUP BY` and `HAVING`
+* ✅  Relative time-based filtering
+* ✅  Ranking and selection
 
   * Top N
   * Bottom N
   * Latest N
   * First N
-* âœ… Informix-specific SQL generation
+* ✅  Informix-specific SQL generation
 
   * Uses `FIRST N` rather than `LIMIT`
-* âœ… Structured AST construction
-* âœ… AST validation
-* âœ… Deterministic AST-to-IBM Informix SQL compilation
-* âœ… Golden Test regression suite
-* âœ… End-to-end regression coverage for business and query behavior
+* ✅  Structured AST construction
+* ✅  AST validation
+* ✅  Deterministic AST-to-IBM Informix SQL compilation
+* ✅  Golden Test regression suite
+* ✅  End-to-end regression coverage for business and query behavior
 
 ## Example Usage
 
@@ -497,90 +497,89 @@ The project structure reflects the separation between AI interaction, business r
 
 ```text
 DataNex-AI/
-â”‚
-â”œâ”€â”€ ai/
-â”‚   â”œâ”€â”€ ai_engine.py
-â”‚   â””â”€â”€ prompts.py
-â”‚
-â”œâ”€â”€ api/
-â”‚   â””â”€â”€ routes.py
-â”‚
-â”œâ”€â”€ compiler/
-â”‚   â”œâ”€â”€ ast_compiler.py
-â”‚   â”œâ”€â”€ query_ast.py
-â”‚   â””â”€â”€ sql_generator.py
-â”‚
-â”œâ”€â”€ context/
-â”‚   â”œâ”€â”€ database_context.py
-â”‚   â”œâ”€â”€ knowledge_context.py
-â”‚   â””â”€â”€ reasoning_context.py
-â”‚
-â”œâ”€â”€ core/
-â”‚   â”œâ”€â”€ config.py
-â”‚   â”œâ”€â”€ logger.py
-â”‚   â””â”€â”€ security.py
-â”‚
-â”œâ”€â”€ knowledge/
-â”‚   â”œâ”€â”€ business_constants
-â”‚   â””â”€â”€ business_keywords
-â”‚
-â”œâ”€â”€ logs/
-â”‚   â””â”€â”€ app.log
-â”‚
-â”œâ”€â”€ models/
-â”‚   â””â”€â”€ schemas.py
-â”‚
-â”œâ”€â”€ reasoning/
-â”‚   â”œâ”€â”€ business_facts.py
-â”‚   â”œâ”€â”€ business_reasoning.py
-â”‚   â”œâ”€â”€ measure_reasoning.py
-â”‚   â””â”€â”€ sql_reasoning.py
-â”‚
-â”œâ”€â”€ schema/
-â”‚   â””â”€â”€ schema_utils.py
-â”‚
-â”œâ”€â”€ screenshots/
-â”‚   â”œâ”€â”€ result.png
-â”‚   â””â”€â”€ UI.png
-â”‚
-â”œâ”€â”€ specification/
-â”‚   â””â”€â”€ REGRESSION_TEST_RANKING_SELECTION.md
-â”‚
-â”œâ”€â”€ static/
-â”‚   â”œâ”€â”€ app.js
-â”‚   â””â”€â”€ style.css
-â”‚
-â”œâ”€â”€ templates/
-â”‚   â””â”€â”€ index.html
-â”‚
-â”œâ”€â”€ tests/
-â”‚   â”œâ”€â”€ data/
-â”‚   â”‚   â”œâ”€â”€ regression_test_cases.py
-â”‚   â”‚   â”œâ”€â”€ test_cases.py
-â”‚   â”‚   â””â”€â”€ test_fixtures.py
-â”‚   â”‚
-â”‚   â”œâ”€â”€ test_ast_compiler.py
-â”‚   â”œâ”€â”€ test_regression_ranking_selection.py
-â”‚   â”œâ”€â”€ TEST_INDEX.md
-â”‚   â””â”€â”€ testing_guidelines.md
-â”‚
-â”œâ”€â”€ utils/
-â”‚   â”œâ”€â”€ normalization.py
-â”‚   â”œâ”€â”€ sql_utils.py
-â”‚   â””â”€â”€ text_utils.py
-â”‚
-â”œâ”€â”€ validators/
-â”‚   â””â”€â”€ validators.py
-â”‚
-â”œâ”€â”€ main.py
-â”œâ”€â”€ .env.example
-â”œâ”€â”€ .gitignore
-â”œâ”€â”€ CHANGELOG.md
-â”œâ”€â”€ DESIGN_PRINCIPLES.md
-â”œâ”€â”€ LICENSE
-â”œâ”€â”€ README.md
-â”œâ”€â”€ requirements.txt
-â””â”€â”€ start.sh
+│
+├── ai/
+│   ├── ai_engine.py
+│   └── prompts.py
+│
+├── api/
+│   └── routes.py
+│
+├── compiler/
+│   ├── ast_compiler.py
+│   └── query_ast.py
+│
+├── context/
+│   ├── database_context.py
+│   ├── knowledge_context.py
+│   └── reasoning_context.py
+│
+├── core/
+│   ├── config.py
+│   ├── logger.py
+│   └── security.py
+│
+├── knowledge/
+│   ├── business_constants.py
+│   └── business_keywords.py
+│
+├── logs/
+│   └── app.log
+│
+├── models/
+│   └── schemas.py
+│
+├── reasoning/
+│   ├── business_facts.py
+│   ├── business_reasoning.py
+│   ├── measure_reasoning.py
+│   └── sql_reasoning.py
+│
+├── schema/
+│   └── schema_utils.py
+│
+├── screenshots/
+│   ├── result.png
+│   └── UI.png
+│
+├── specification/
+│   └── REGRESSION_TEST_RANKING_SELECTION.md
+│
+├── static/
+│   ├── app.js
+│   └── style.css
+│
+├── templates/
+│   └── index.html
+│
+├── tests/
+│   ├── data/
+│   │   ├── regression_test_cases.py
+│   │   ├── test_cases.py
+│   │   └── test_fixtures.py
+│   │
+│   ├── test_ast_compiler.py
+│   ├── test_regression_ranking_selection.py
+│   ├── TEST_INDEX.md
+│   └── testing_guidelines.md
+│
+├── utils/
+│   ├── normalization.py
+│   ├── sql_utils.py
+│   └── text_utils.py
+│
+├── validators/
+│   └── validators.py
+│
+├── main.py
+├── .env.example
+├── .gitignore
+├── CHANGELOG.md
+├── DESIGN_PRINCIPLES.md
+├── LICENSE
+├── README.md
+├── requirements.txt
+└── start.sh
 ```
 
 ### Directory Responsibilities
