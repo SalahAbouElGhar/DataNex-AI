@@ -70,3 +70,38 @@ def test_accepts_column_name_containing_forbidden_keyword():
         sql,
         {"has_aggregation": False},
     ) is True
+
+def test_validate_sql_allows_forbidden_words_in_string_literal():
+    sql = (
+        "SELECT 'UPDATE DELETE INSERT DROP' AS note "
+        "FROM prod_tbl"
+    )
+
+    assert validate_sql(
+        sql,
+        {"has_aggregation": False},
+    ) is True
+
+
+def test_validate_sql_allows_forbidden_words_in_comments():
+    sql = (
+        "SELECT factory_id FROM prod_tbl "
+        "/* DELETE UPDATE INSERT DROP */"
+    )
+
+    assert validate_sql(
+        sql,
+        {"has_aggregation": False},
+    ) is True
+
+def test_validate_sql_still_rejects_forbidden_keyword():
+    sql = (
+        "SELECT factory_id FROM prod_tbl; "
+        "DELETE FROM prod_tbl"
+    )
+
+    with pytest.raises(ValueError, match="Forbidden keyword: DELETE"):
+        validate_sql(
+            sql,
+            {"has_aggregation": False},
+        )

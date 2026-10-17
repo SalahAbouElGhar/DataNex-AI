@@ -136,6 +136,77 @@ def validate_query_plan(query_plan):
     }
 
 #-----------------------------------------------
+def _mask_sql_literals_and_comments(sql: str) -> str:
+    """
+    Mask quoted strings, quoted identifiers, and SQL comments
+    while preserving positions and newline characters.
+    """
+    result = list(sql)
+    state = "normal"
+    i = 0
+
+    while i < len(sql):
+        char = sql[i]
+
+        if state == "normal":
+            if char == "'":
+                result[i] = " "
+                state = "single_quote"
+
+            elif char == '"':
+                result[i] = " "
+                state = "double_quote"
+
+            elif sql.startswith("--", i):
+                result[i] = result[i + 1] = " "
+                state = "line_comment"
+                i += 2
+                continue
+
+            elif sql.startswith("/*", i):
+                result[i] = result[i + 1] = " "
+                state = "block_comment"
+                i += 2
+                continue
+
+        elif state in ("single_quote", "double_quote"):
+            delimiter = "'" if state == "single_quote" else '"'
+
+            if char != "\n":
+                result[i] = " "
+
+            if char == delimiter:
+                # SQL escapes a quote by doubling it.
+                if i + 1 < len(sql) and sql[i + 1] == delimiter:
+                    result[i + 1] = " "
+                    i += 2
+                    continue
+
+                state = "normal"
+
+        elif state == "line_comment":
+            if char == "\n":
+                state = "normal"
+            else:
+                result[i] = " "
+
+        elif state == "block_comment":
+            if char != "\n":
+                result[i] = " "
+
+            if sql.startswith("*/", i):
+                result[i] = result[i + 1] = " "
+                state = "normal"
+                i += 2
+                continue
+
+        i += 1
+
+    if state in ("single_quote", "double_quote", "block_comment"):
+        raise ValueError("Unterminated SQL literal or comment")
+
+    return "".join(result)
+#-----------------------------------------------
 def validate_sql(sql: str, query_plan: dict):
 
     if not isinstance(sql, str) or not sql.strip():
@@ -144,13 +215,15 @@ def validate_sql(sql: str, query_plan: dict):
     if not isinstance(query_plan, dict):
         raise ValueError("Query plan must be a dictionary")
 
-    sql_upper = sql.upper()
+    # Ignore literals and comments when examining SQL structure.
+    sql_code = _mask_sql_literals_and_comments(sql)
+    sql_upper = sql_code.upper()
 
     # RULE 1: Aggregation check
     dimensions = query_plan.get("dimensions") or []
 
     if query_plan.get("has_aggregation") and dimensions:
-        if "GROUP BY" not in sql_upper:
+        if not re.search(r"\bGROUP\s+BY\b", sql_upper):
             raise ValueError("Invalid SQL: missing GROUP BY")
 
     # RULE 2: SELECT only
