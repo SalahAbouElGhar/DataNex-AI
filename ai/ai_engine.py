@@ -10,8 +10,9 @@ from ai.prompts import (
     )
 from validators.validators import (
     validate_prompt,
-    validate_query_plan
-    )
+    validate_query_plan,
+    validate_sql,
+)
 from compiler.query_ast import (
     build_ast
     )
@@ -25,7 +26,19 @@ from core.config import (
     ENABLE_DEMO_SCHEMA_FALLBACK,
     DOMAINS
 )
-#-------------------------------------------------------
+from core.result import ResultStatus, StructuredResult
+from core.messages import MESSAGES
+from utils.sql_utils import clean_sql, fix_informix_sql
+# -------------------------------------------------------
+STAGE_FAILURES = {
+    "query_planning": "QUERY_PLAN_BUILD_FAILED",
+    "query_plan_validation": "QUERY_PLAN_VALIDATION_FAILED",
+    "ast_construction": "AST_BUILD_FAILED",
+    "sql_compilation": "SQL_COMPILATION_FAILED",
+    "sql_validation": "SQL_VALIDATION_FAILED",
+    "sql_normalization": "SQL_NORMALIZATION_FAILED",
+}
+# -------------------------------------------------------
 sessions = {}
 #-------------------------------------------------------
 def get_session(session_id):
@@ -108,92 +121,157 @@ def create_query_plan(session, prompt):
                 )
 
     return schema, query_plan
-#---------------------------------------------------------
+# ---------------------------------------------------------
 def ask_ai(prompt, session_id):
 
-    logger.info(f"User Prompt: {prompt}")
+    logger.info("User Prompt: %s", prompt)
 
-    # -------------------
-    # SESSION
-    # -------------------
-    session = get_session(session_id)
+    stage = "session_setup"
 
-    chat_history = session["history"]
-
-    # -------------------
-    # HISTORY
-    # -------------------
-    add_user_message(session, prompt)
-
-    # -------------------
-    # VALIDATION
-    # -------------------
-
-    validation_error = validate_prompt(prompt)
-
-    if validation_error:
-        return validation_error
-
-    # -------------------
-    # SAVE SCHEMA
-    # -------------------
-
-    if save_user_schema(session, prompt):
-        return "Schema received successfully."
-
-    # -------------------
-    # MUST HAVE SCHEMA
-    # -------------------
-
-    raw_schema = get_active_schema(session,prompt)
-
-    if not raw_schema:
-        return (
-            "Schema information required.\n"
-            "Please provide:\n"
-            "- table name\n"
-            "- relevant column names"
-        )
-
-    # -------------------------
-    # QUERY PLAN
-    # -------------------------
     try:
+        # -------------------
+        # SESSION
+        # -------------------
+        session = get_session(session_id)
+
+        add_user_message(session, prompt)
+
+        # -------------------
+        # PROMPT VALIDATION
+        # -------------------
+        stage = "prompt_validation"
+
+        validation_error = validate_prompt(prompt)
+
+        if validation_error:
+            return StructuredResult(
+                status=ResultStatus.NEEDS_INPUT,
+                stage=stage,
+                code="PROMPT_INVALID",
+                message=MESSAGES["PROMPT_INVALID"],
+            )
+
+        # -------------------
+        # SAVE SCHEMA
+        # -------------------
+        stage = "schema_processing"
+
+        if save_user_schema(session, prompt):
+            return StructuredResult(
+                status=ResultStatus.SUCCESS,
+                stage=stage,
+                code="SCHEMA_RECEIVED",
+                message=MESSAGES["SCHEMA_RECEIVED"],
+                data={"schema_saved": True},
+            )
+
+        # -------------------
+        # MUST HAVE SCHEMA
+        # -------------------
+        stage = "schema_check"
+
+        raw_schema = get_active_schema(session, prompt)
+
+        if not raw_schema:
+            return StructuredResult(
+                status=ResultStatus.NEEDS_INPUT,
+                stage=stage,
+                code="SCHEMA_REQUIRED",
+                message=MESSAGES["SCHEMA_REQUIRED"],
+            )
+
+        # -------------------------
+        # QUERY PLAN
+        # -------------------------
+        stage = "query_planning"
 
         schema, query_plan = create_query_plan(
-                                session,
-                                prompt
-                            )
+            session,
+            prompt,
+        )
 
+        # -------------------------
+        # QUERY PLAN VALIDATION
+        # -------------------------
+        stage = "query_plan_validation"
 
         validation_result = validate_query_plan(query_plan)
 
-        if not validation_result["valid"]:
-            raise Exception(
-                "\n".join(
-                    validation_result["errors"]
-                )
+        if not validation_result.get("valid", False):
+            errors = validation_result.get("errors", [])
+
+            logger.warning(
+                "Query plan validation failed. Errors: %s",
+                errors,
             )
-    except Exception as e:
-        traceback.print_exc()
-    #----------------------------------
-    # AST COMPILER
-    #----------------------------------
-    try:
+
+            return StructuredResult(
+                status=ResultStatus.FAILURE,
+                stage=stage,
+                code="QUERY_PLAN_INVALID",
+                message=MESSAGES["QUERY_PLAN_INVALID"],
+            )
+
+        # -------------------------
+        # AST CONSTRUCTION
+        # -------------------------
+        stage = "ast_construction"
+
         ast = build_ast(query_plan)
         alias_map = query_plan["alias_map"]
 
-    except Exception as e:
-        traceback.print_exc()
+        # -------------------------
+        # SQL COMPILATION
+        # -------------------------
+        stage = "sql_compilation"
 
-    try:
         sql = compile_sql_ast(
             ast,
             schema,
-            alias_map
+            alias_map,
         )
-        return sql
+        # -------------------------
+        # SQL NORMALIZATION
+        # -------------------------
+        stage = "sql_normalization"
 
-    except Exception as e:
-        traceback.print_exc()
-##------------------------------------------------------------
+        sql = fix_informix_sql(sql)
+        sql = clean_sql(sql)
+
+        # -------------------------
+        # SQL VALIDATION
+        # -------------------------
+        stage = "sql_validation"
+
+        validate_sql(sql, query_plan)
+
+        # -------------------------
+        # SUCCESS
+        # -------------------------
+        return StructuredResult(
+            status=ResultStatus.SUCCESS,
+            stage=stage,
+            code="SQL_COMPILED",
+            data={"sql": sql},
+        )
+
+    except Exception:
+        logger.exception(
+            "DataNex processing failed at stage=%s",
+            stage,
+        )
+
+        code = STAGE_FAILURES.get(
+            stage,
+            "INTERNAL_ERROR",
+        )
+
+        return StructuredResult(
+            status=ResultStatus.FAILURE,
+            stage=stage,
+            code=code,
+            message=MESSAGES.get(
+                code,
+                MESSAGES["INTERNAL_ERROR"],
+            ),
+        )
