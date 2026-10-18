@@ -140,3 +140,49 @@ def test_accepts_semicolon_inside_comment():
         sql,
         {"has_aggregation": False},
     ) is True
+
+def test_validate_sql_handles_escaped_quotes_in_string_literal():
+    sql = "SELECT 'It''s DELETE; UPDATE' AS note FROM prod_tbl"
+
+    assert validate_sql(
+        sql,
+        {"has_aggregation": False},
+    ) is True
+
+def test_validate_sql_accepts_block_comment_after_semicolon():
+    sql = (
+        "SELECT factory_id FROM prod_tbl; "
+        "/* DELETE; UPDATE; INSERT */"
+    )
+
+    assert validate_sql(
+        sql,
+        {"has_aggregation": False},
+    ) is True
+
+def test_validate_sql_accepts_line_comment_after_semicolon():
+    sql = (
+        "SELECT factory_id FROM prod_tbl; "
+        "-- DELETE; UPDATE; INSERT"
+    )
+
+    assert validate_sql(
+        sql,
+        {"has_aggregation": False},
+    ) is True
+
+def test_validate_sql_rejects_second_statement_after_comment():
+    sql = (
+        "SELECT factory_id FROM prod_tbl; "
+        "/* separator */ "
+        "SELECT qty FROM prod_tbl"
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="Only one SQL statement is allowed",
+    ):
+        validate_sql(
+            sql,
+            {"has_aggregation": False},
+        )
