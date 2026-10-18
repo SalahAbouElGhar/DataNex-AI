@@ -217,6 +217,7 @@ def validate_sql(sql: str, query_plan: dict):
 
     # Ignore literals and comments when examining SQL structure.
     sql_code = _mask_sql_literals_and_comments(sql)
+
     sql_upper = sql_code.upper()
 
     # RULE 1: Aggregation check
@@ -238,5 +239,19 @@ def validate_sql(sql: str, query_plan: dict):
 
         if re.search(pattern, sql_upper):
             raise ValueError(f"Forbidden keyword: {word}")
+
+    # RULE 0: Allow at most one SQL statement.
+    # A single trailing semicolon is allowed.
+    sql_statement = sql_code.strip()
+
+    semicolon_positions = [
+        match.start()
+        for match in re.finditer(";", sql_statement)
+    ]
+
+    if semicolon_positions and semicolon_positions != [
+        len(sql_statement) - 1
+    ]:
+        raise ValueError("Only one SQL statement is allowed")
 
     return True
