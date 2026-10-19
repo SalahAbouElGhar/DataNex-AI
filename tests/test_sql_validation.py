@@ -186,3 +186,39 @@ def test_validate_sql_rejects_second_statement_after_comment():
             sql,
             {"has_aggregation": False},
         )
+
+
+@pytest.mark.parametrize(
+    "sql",
+    [
+        "SELECT 'unfinished FROM prod_tbl",
+        'SELECT "unfinished FROM prod_tbl',
+        "SELECT factory_id FROM prod_tbl /* unfinished",
+    ],
+)
+def test_rejects_unterminated_literals_and_comments(sql):
+    with pytest.raises(
+        ValueError,
+        match="Unterminated SQL literal or comment",
+    ):
+        validate_sql(
+            sql,
+            {"has_aggregation": False},
+        )
+
+
+def test_rejects_second_statement_after_line_comment():
+    sql = (
+        "SELECT factory_id FROM prod_tbl; "
+        "-- comment\n"
+        "SELECT qty FROM prod_tbl"
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="Only one SQL statement is allowed",
+    ):
+        validate_sql(
+            sql,
+            {"has_aggregation": False},
+        )
