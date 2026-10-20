@@ -217,8 +217,17 @@ def validate_sql(sql: str, query_plan: dict):
 
     # Ignore literals and comments when examining SQL structure.
     sql_code = _mask_sql_literals_and_comments(sql)
-
     sql_upper = sql_code.upper()
+
+    # RULE: Reject SELECT INTO table/file clauses
+    into_pattern = (
+        r"\bINTO\s+(?:TEMP|SCRATCH|STANDARD|RAW|EXTERNAL)\b"
+    )
+
+    if re.search(into_pattern, sql_upper):
+        raise ValueError(
+            "SELECT INTO table clauses are not allowed"
+        )
 
     # RULE 1: Aggregation check
     dimensions = query_plan.get("dimensions") or []

@@ -222,3 +222,53 @@ def test_rejects_second_statement_after_line_comment():
             sql,
             {"has_aggregation": False},
         )
+
+@pytest.mark.parametrize(
+    "into_clause",
+    [
+        "TEMP temp_prod",
+        "SCRATCH scratch_prod",
+        "STANDARD new_prod",
+        "RAW new_prod",
+        "EXTERNAL '/tmp/out.txt'",
+    ],
+)
+
+def test_rejects_select_into_table_clauses(into_clause):
+    sql = (
+        "SELECT factory_id FROM prod_tbl "
+        f"INTO {into_clause}"
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="SELECT INTO table clauses are not allowed",
+    ):
+        validate_sql(
+            sql,
+            {"has_aggregation": False},
+        )
+
+
+def test_allows_into_temp_phrase_in_string_literal():
+    sql = (
+        "SELECT 'INTO TEMP scratch' AS note "
+        "FROM prod_tbl"
+    )
+
+    assert validate_sql(
+        sql,
+        {"has_aggregation": False},
+    ) is True
+
+
+def test_allows_into_temp_phrase_in_comment():
+    sql = (
+        "SELECT factory_id FROM prod_tbl "
+        "/* INTO TEMP scratch */"
+    )
+
+    assert validate_sql(
+        sql,
+        {"has_aggregation": False},
+    ) is True
